@@ -1,4 +1,6 @@
 A --> a B
 B --> a A
 A -->
+aaaaa
 aaaa
+aaaaaaaaaa
