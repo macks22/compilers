@@ -35,41 +35,32 @@ ws          [ \t]+
 
 %%
 
-<INITIAL>{nonterm}          {printf("nonterm: %s (start)\n", yytext);
-                             start = yytext[0];
+<INITIAL>{nonterm}          {start = yytext[0];
                              vector_append(left, yytext[0]);
                              BEGIN CFG_NT; }
 
-<CFG_NT>{prod}              {printf("prod: %s\n", yytext); BEGIN RIGHT; }
+<CFG_NT>{prod}              {BEGIN RIGHT; }
 
-<RIGHT>{term}               {printf("term: %s\n", yytext);
-                             vector_append(mid, yytext[0]);
+<RIGHT>{term}               {vector_append(mid, yytext[0]);
                              BEGIN RIGHT_T; }
-<RIGHT>[\n]                 {printf("NEWLINE\n");
-                             vector_append(mid, '\0');
+<RIGHT>[\n]                 {vector_append(mid, '\0');
                              vector_append(right, '\0');
                              add_final_state(left->data[ruleno]);
                              ruleno++;
                              BEGIN CFG; }
 
-<RIGHT_T>{nonterm}          {printf("nonterm: %s\n", yytext);
-                             vector_append(right, yytext[0]);
+<RIGHT_T>{nonterm}          {vector_append(right, yytext[0]);
                              BEGIN RIGHT_NT; }
 
-<RIGHT_NT>[\n]              {printf("NEWLINE\n"); ruleno++; BEGIN CFG; }
+<RIGHT_NT>[\n]              {ruleno++; BEGIN CFG; }
 
-<CFG>{nonterm}              {printf("nonterm  (left):  %s\n", yytext);
-                             vector_append(left, yytext[0]);
+<CFG>{nonterm}              {vector_append(left, yytext[0]);
                              BEGIN CFG_NT; }
-<CFG>{term}                 {printf("Done with CFG parsing (found terminal "
-                                    "on left side of production)\n");
-                             printf("char: %c\n", yytext[0]);
-                             curstate = start;
+<CFG>{term}                 {curstate = start;
                              parse_token(yytext[0]);
                              BEGIN DFA; }
 
-<DFA>{term}                 {printf("char: %c\n", yytext[0]);
-                             parse_token(yytext[0]); }
+<DFA>{term}                 {parse_token(yytext[0]); }
 <DFA>[\n]                   {if (valid_string()) { printf("String accepted\n"); }
                              else { printf("String rejected\n"); }
                              curstate = start;  /* start over for new string */
@@ -95,15 +86,10 @@ valid_string()
 void
 parse_token(char token)
 {
-    printf("processing token:    %c\n", token);
     for (i=0; i < left->size; i++) {
         if (left->data[i] == curstate && mid->data[i] == token) {
             /* if mid is not null, this won't be either */
-            printf("using rule: ");
-            printf("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
-            printf("to change state FROM: %c\n", curstate);
             curstate = right->data[i];
-            printf("to new state          %c\n\n", curstate);
             break;
         }
     }
@@ -143,8 +129,5 @@ main()
     final_states = (char *)malloc(sizeof(char) * 26);
 
     yylex();
-
-    print_cfg();
-    printf("\nfinal states: %s\n", final_states);
     return 0;
 }
