@@ -11,6 +11,8 @@ E --> b B
 B -->
 aaaaaaab
 abbbbbb
-abababa
 bbb
 aaa
+
+efasd;flk
+abababa
