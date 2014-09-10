@@ -27,6 +27,8 @@ int valid_string();
 %s RIGHT_NT
 /* finished parsing CFG input; DFA has been built and is being used */
 %s DFA
+/* used to identify empty lines/whitespace at beginning */
+%s DFA_S
 
 term        [a-z]
 nonterm     [A-Z][a-zA-Z0-9]*
@@ -64,7 +66,11 @@ ws          [ \t]+
 <DFA>[\n]                   {if (valid_string()) { printf("String accepted\n"); }
                              else { printf("String rejected\n"); }
                              curstate = start;  /* start over for new string */
-                            }
+                             BEGIN DFA_S; }
+
+<DFA_S>{term}               {parse_token(yytext[0]);
+                             BEGIN DFA;}
+<DFA_S>[\n]                 ;
 
 {ws}                        ;
 [\n]                        ;
@@ -86,13 +92,19 @@ valid_string()
 void
 parse_token(char token)
 {
+    int action_taken = 0;
     for (i=0; i < left->size; i++) {
         if (left->data[i] == curstate && mid->data[i] == token) {
             /* if mid is not null, this won't be either */
             curstate = right->data[i];
+            action_taken = 1;
             break;
         }
     }
+    if (!action_taken) {
+        curstate = start;
+    }
+
 }
 
 void
