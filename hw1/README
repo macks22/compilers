@@ -1,0 +1,34 @@
+# Steps
+
+1.  read input to construct DFA
+    *   have 5 types of tokens for DFA section
+        1.  terminal (lowercase letters)
+        2.  nonterminal (uppercase letters)
+        3.  productions (-->)
+        4.  whitespace (tabs and spaces)
+        5.  EOL (\n)
+    *   DFA input ends at first input not of CFG format
+        -   CFG format has 2 possible forms
+            1.  term --> nonterm term\n
+            2.  term -->\n
+    *   DFA can be stored as a table
+        -   data structure choice?
+            +   arrays are no good because we want to extend for new inputs
+            +   linked list is viable
+            +   a general graph would also work well
+            +   SIMPLEST OPTION: 3 arrays
+
+    A --> a B
+    B --> a B
+    B -->
+
+    produces
+
+    A   a   B
+    B   a   B
+    B   \n  \0
+
+2.  read subsequent inputs as inputs to just-constructed DFA
+    *   return accept/reject for each based on DFA
+    *   must traverse DFA structure
+
