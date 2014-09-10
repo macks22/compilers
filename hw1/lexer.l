@@ -72,6 +72,7 @@ ws          [ \t]+
                              parse_token(yytext[0]); }
 <DFA>[\n]                   {if (valid_string()) { printf("String accepted\n"); }
                              else { printf("String rejected\n"); }
+                             curstate = start;  /* start over for new string */
                             }
 
 {ws}                        ;
@@ -101,8 +102,8 @@ parse_token(char token)
             printf("using rule: ");
             printf("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
             printf("to change state FROM: %c\n", curstate);
-            printf("to new state          %c\n\n", curstate);
             curstate = right->data[i];
+            printf("to new state          %c\n\n", curstate);
             break;
         }
     }
