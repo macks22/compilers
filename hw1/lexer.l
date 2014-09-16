@@ -14,6 +14,7 @@ Vector *left, *mid, *right;  // used to store the DFA.
 Vector *string;              // used to hold current string being parsed
 
 void log_msg(char *fmt, ...);
+void log_rule(int index);
 void print_cfg();
 void add_final_state(char state);
 int parse_token(char token);
@@ -66,9 +67,6 @@ ws          [ \t]+
 <CFG>{nonterm}              {vector_append(left, adler32(yytext, yyleng));
                              BEGIN CFG_NT; }
 <CFG>{term}                 {print_cfg();
-                             log_msg("START STATE IS: %c\n", start);
-                             log_msg("%i FINAL STATES: %s\n\n",
-                                 (int)strlen(final_states), final_states);
                              curstate = start;
                              parse_token(yytext[0]);
                              BEGIN DFA; }
@@ -107,7 +105,7 @@ valid_string()
         return 0;
     }
     for (i = 0; i < strlen(final_states); i++) {
-        log_msg("%c == %c?\n", curstate, final_states[i]);
+        log_msg("%i == %i?\n", curstate, final_states[i]);
         if (final_states[i] == curstate) {
             return 1;
         }
@@ -129,10 +127,10 @@ parse_token(char token)
         if (left->data[i] == curstate && mid->data[i] == token) {
             /* if mid is not null, this won't be either */
             log_msg("using rule:           ");
-            log_msg("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
-            log_msg("to change state FROM: %c\n", curstate);
+            log_rule(i);
+            log_msg("to change state FROM: %i\n", curstate);
             curstate = right->data[i];
-            log_msg("to new state:         %c\n\n", curstate);
+            log_msg("to new state:         %i\n\n", curstate);
             action_taken = 1;
             break;
         }
@@ -140,7 +138,7 @@ parse_token(char token)
     if (!action_taken) { /* must take an action in order to be in language. */
         reject = 1;
         log_msg("no action taken\n");
-        log_msg("current state:        %c\n\n", curstate);
+        log_msg("current state:        %i\n\n", curstate);
         log_msg("REJECTED; PROCESSING TILL END.\n");
     }
     return action_taken;
@@ -161,9 +159,14 @@ void
 print_cfg()
 {   /* Print the Context-Free Grammar parsed from the productions. */
     for (i=0; i < left->size; i++) {
-        log_msg("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
+        log_rule(i);
     }
-    log_msg("\n");
+    log_msg("\nSTART STATE IS: %i\n", start);
+    log_msg("%i FINAL STATES: ", (int)strlen(final_states), final_states);
+    for (i=0; i < strlen(final_states); i++) {
+        log_msg("%i", final_states[i]);
+    }
+    log_msg("\n\n");
 }
 
 void log_msg(char *fmt, ...)
@@ -173,6 +176,18 @@ void log_msg(char *fmt, ...)
         va_start(args, fmt);
         vprintf(fmt, args);
         va_end(args);
+    }
+}
+
+void
+log_rule(int index)
+{   /* Print ruleno. `index` from DFA vectors. */
+    if (right->data[i] == '\0') {
+        log_msg("%i --> %c %c\n",
+            left->data[i], mid->data[i], right->data[i]);
+    } else {
+        log_msg("%i --> %c %i\n",
+            left->data[i], mid->data[i], right->data[i]);
     }
 }
 
