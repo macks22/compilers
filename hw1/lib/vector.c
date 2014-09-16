@@ -52,13 +52,22 @@ void vector_double_capacity_if_full(Vector *vector) {
 }
 
 void vector_print(Vector *vector) {
+    /* Print contents of vector, one char at a time.
+     * This does not require the vector be null-terminated.
+     */
     int i;
     for (i=0; i < vector->size; i++) {
         printf("%c", vector_get(vector, i));
     }
-    printf("\n");
 }
 
 void vector_free(Vector *vector) {
     free(vector->data);
+}
+
+void vector_reinit(Vector *vector) {
+    /* Free the contents of the vector and initialize it again.
+     */
+    vector_free(vector);
+    vector_init(vector);
 }

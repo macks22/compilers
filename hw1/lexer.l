@@ -1,18 +1,20 @@
 %{
 #include <stdarg.h>
 #include "lib/vector.h"
+#include "lib/hash.h"
 
 int i; // used in for loops
 int ruleno; // track which production is being processed
 int reject; // set when string rejection is determined before EOL
-int verbose;    // if set, output will be verbose
+int verbose;   // if set, output will be verbose
 char start;    // track the start state (non-terminal = capital char)
 char curstate; // track the current state during string testing
 char *final_states;  // if curstate is in this list at end of string, accept
 Vector *left, *mid, *right;  // used to store the DFA.
+Vector *string;              // used to hold current string being parsed
 
 void log_msg(char *fmt, ...);
-void printf_cfg();
+void print_cfg();
 void add_final_state(char state);
 int parse_token(char token);
 int valid_string();
@@ -34,7 +36,7 @@ int valid_string();
 /* finished parsing CFG input; DFA has been built and is being used */
 %s DFA
 /* used to identify empty lines/whitespace at beginning */
-%s DFA_S
+/* %s DFA_S */
 
 term        [a-z]
 nonterm     [A-Z][a-zA-Z0-9]*
@@ -43,8 +45,8 @@ ws          [ \t]+
 
 %%
 
-<INITIAL>{nonterm}          {start = yytext[0];
-                             vector_append(left, yytext[0]);
+<INITIAL>{nonterm}          {start = adler32(yytext, yyleng);
+                             vector_append(left, adler32(yytext, yyleng));
                              BEGIN CFG_NT; }
 
 <CFG_NT>{prod}              {BEGIN RIGHT; }
@@ -53,30 +55,38 @@ ws          [ \t]+
                              BEGIN RIGHT_T; }
 <RIGHT>[\n]                 {vector_append(mid, '\0');
                              vector_append(right, '\0');
-                             add_final_state(left->data[ruleno]);
-                             ruleno++;
+                             add_final_state(left->data[ruleno++]);
                              BEGIN CFG; }
 
-<RIGHT_T>{nonterm}          {vector_append(right, yytext[0]);
+<RIGHT_T>{nonterm}          {vector_append(right, adler32(yytext, yyleng));
                              BEGIN RIGHT_NT; }
 
 <RIGHT_NT>[\n]              {ruleno++; BEGIN CFG; }
 
-<CFG>{nonterm}              {vector_append(left, yytext[0]);
+<CFG>{nonterm}              {vector_append(left, adler32(yytext, yyleng));
                              BEGIN CFG_NT; }
-<CFG>{term}                 {curstate = start;
+<CFG>{term}                 {print_cfg();
+                             log_msg("START STATE IS: %c\n", start);
+                             log_msg("%i FINAL STATES: %s\n\n",
+                                 (int)strlen(final_states), final_states);
+                             curstate = start;
                              parse_token(yytext[0]);
                              BEGIN DFA; }
 
-<DFA>{term}                 {if (!parse_token(yytext[0])) { reject = 1; } }
-<DFA>[\n]                   {if (valid_string()) { printf("String accepted\n"); }
-                             else { printf("String rejected\n"); }
+<DFA>{term}                 {parse_token(yytext[0]); }
+<DFA>[\n]                   {if (valid_string()) printf("String accepted");
+                             else printf("String rejected");
+                             if (verbose) {
+                                 printf(" (");
+                                 vector_print(string);
+                                 printf(")\n\n");
+                             } else {
+                                 printf("\n");
+                             }
+                             vector_reinit(string);  /* clear buf for next */
                              curstate = start;  /* start over for new string */
-                             BEGIN DFA_S; }
-
-<DFA_S>{term}               {parse_token(yytext[0]);
-                             BEGIN DFA;}
-<DFA_S>[\n]                 ;
+                             reject = 0;  /* ditto */
+                            }
 
 {ws}                        ;
 [\n]                        ;
@@ -91,10 +101,13 @@ valid_string()
      * it is set, then immediately reject the string. Otherwise, if current
      * state is in the set of final states, return 1, else 0.
      */
+    vector_append(string, '\0');  // null terminate string: prep to log
     if (reject) {
+        log_msg("early reject recognized\n");
         return 0;
     }
-    for (i = 0; i <= strlen(final_states); i++) {
+    for (i = 0; i < strlen(final_states); i++) {
+        log_msg("%c == %c?\n", curstate, final_states[i]);
         if (final_states[i] == curstate) {
             return 1;
         }
@@ -110,20 +123,26 @@ parse_token(char token)
      * process the production, changing the state, then return 1.
      */
     int action_taken = 0;
-    log_msg("processing token:    %c\n", token);
+    vector_append(string, token);
+    log_msg("processing token:     %c\n", token);
     for (i=0; i < left->size; i++) {
         if (left->data[i] == curstate && mid->data[i] == token) {
             /* if mid is not null, this won't be either */
-            log_msg("using rule: ");
+            log_msg("using rule:           ");
             log_msg("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
             log_msg("to change state FROM: %c\n", curstate);
             curstate = right->data[i];
-            log_msg("to new state:         %c\n", curstate);
+            log_msg("to new state:         %c\n\n", curstate);
             action_taken = 1;
             break;
         }
     }
-    log_msg("current state: %c\n\n", curstate);
+    if (!action_taken) { /* must take an action in order to be in language. */
+        reject = 1;
+        log_msg("no action taken\n");
+        log_msg("current state:        %c\n\n", curstate);
+        log_msg("REJECTED; PROCESSING TILL END.\n");
+    }
     return action_taken;
 }
 
@@ -142,8 +161,9 @@ void
 print_cfg()
 {   /* Print the Context-Free Grammar parsed from the productions. */
     for (i=0; i < left->size; i++) {
-        printf("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
+        log_msg("%c --> %c %c\n", left->data[i], mid->data[i], right->data[i]);
     }
+    log_msg("\n");
 }
 
 void log_msg(char *fmt, ...)
@@ -172,8 +192,10 @@ main(int argc, char *argv[])
     vector_init(left);
     mid = (Vector *)malloc(sizeof(Vector));
     vector_init(mid);
-    right = (Vector *)malloc(sizeof(right));
+    right = (Vector *)malloc(sizeof(Vector));
     vector_init(right);
+    string = (Vector *)malloc(sizeof(Vector));
+    vector_init(string);
 
     // make space for the array of possible final states
     final_states = (char *)malloc(sizeof(char) * 26);

@@ -22,3 +22,5 @@ void vector_double_capacity_if_full(Vector *vector);
 void vector_print(Vector *vector);
 
 void vector_free(Vector *vector);
+
+void vector_reinit(Vector *vector);
