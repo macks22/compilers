@@ -23,7 +23,6 @@ int main() {
     // this will expand and zero-fill the vector to fit
     vector_set(&vector, 200, 'a');
 
-
     // we're all done playing with our vector, 
     // so free its underlying data array
     vector_free(&vector);
