@@ -2,13 +2,13 @@
 
 Final states: C, D, B
 Expected output:
-    String accepted
-    String accepted
-    String rejected
-    String accepted
-    String rejected (empty string not in language)
-    String rejected (several chars not in language)
-    String rejected
+aaaaaaab   String accepted
+abbbbbb    String accepted
+bbb        String rejected
+aaa        String accepted
+           String rejected (empty string not in language)
+efasd;flk  String rejected (several chars not in language)
+abababa    String rejected
 
 # test1.txt
 
