@@ -7,7 +7,10 @@ flex:
 	flex lexer.l
 
 test:
+	./bin/lexer < ./tests/test0.txt
 	./bin/lexer < ./tests/test1.txt
+	./bin/lexer < ./tests/test2.txt
+	./bin/lexer < ./tests/test3.txt
 
 clean:
 	rm lex.yy.c
