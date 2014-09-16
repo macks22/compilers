@@ -1,18 +1,20 @@
-A --> a C
-A --> b B
-C --> a E
-C --> b D
-C -->
-D --> b D
-D -->
-E --> a E
-E -->
-E --> b B
-B -->
-aaaaaaab
-abbbbbb
-bbb
-aaa
-
-efasd;flk
-abababa
+A1 --> a A2
+A2 --> a A4
+A2 --> b A3
+A2 -->
+A3 --> b A3
+A3 --> 
+A4 --> a A4
+A4 --> b A5
+A5 -->
+aaaaab
+abbbbb
+aaabbb
+b
+ab
+a
+aaaabaaaa
+abbbbaaaaa
+baaaaaa
+bbbbbbbb
+aaaaaaaa

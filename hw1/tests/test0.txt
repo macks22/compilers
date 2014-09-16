@@ -1,0 +1,18 @@
+A --> a C
+A --> b B
+C --> a E
+C --> b D
+C -->
+D --> b D
+D -->
+E --> a E
+E -->
+E --> b B
+B -->
+aaaaaaab
+abbbbbb
+bbb
+aaa
+
+efasd;flk
+abababa
