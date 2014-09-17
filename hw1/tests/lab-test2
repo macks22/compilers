@@ -1,0 +1,13 @@
+A--> a B 
+B --> a A
+A --> b C
+C --> b A
+B --> b D
+D --> b B
+C --> a D
+D --> a C
+C --> 
+abaaa
+aaab
+b
+abababababa
