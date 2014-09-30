@@ -11,6 +11,7 @@ test:
 	./bin/lexer < ./tests/test1.txt
 	./bin/lexer < ./tests/test2.txt
 	./bin/lexer < ./tests/test3.txt
+	./bin/lexer < ./tests/test4.txt
 
 clean:
 	rm lex.yy.c

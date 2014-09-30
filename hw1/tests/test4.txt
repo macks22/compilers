@@ -1,0 +1,8 @@
+A1abC --> 1 B2bdeC
+B2bdeC --> 1 A1abC
+A1abC -->
+111111
+111
+bbbb
+11111111111
+ccccc

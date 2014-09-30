@@ -45,3 +45,13 @@ aaa          String rejected
 bbbb         String rejected
 aaaaaaaaaaa  String rejected
 ccccc        String rejected
+
+# test4.txt
+
+Final states: A1abC
+Expected output:
+111111       String accepted
+111          String rejected
+bbbb         String rejected
+11111111111  String rejected
+ccccc        String rejected

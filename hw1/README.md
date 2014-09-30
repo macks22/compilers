@@ -72,7 +72,7 @@ accepted, otherwise it is rejected.
 
 1.  read input to construct DFA
     *   have 5 types of tokens for DFA section
-        1.  terminal (lowercase letters)
+        1.  terminal (lowercase letters and single digits)
         2.  nonterminal (starts with uppercase letters, followed by alphanumeric)
         3.  productions (-->)
         4.  whitespace (tabs and spaces)

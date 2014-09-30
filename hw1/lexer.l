@@ -39,7 +39,7 @@ int valid_string();
 /* used to identify empty lines/whitespace at beginning */
 /* %s DFA_S */
 
-term        [a-z]
+term        [a-z0-9]
 nonterm     [A-Z][a-zA-Z0-9]*
 prod        "-->"
 ws          [ \t]+
