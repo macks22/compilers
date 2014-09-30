@@ -15,6 +15,7 @@ Matrix *
 matrix_init()
 {   /* Fully initialize a Matrix, then return a pointer to it.
      * This allocates memory for the struct as well as the actual data cells.
+     * All cells are initially set to 0 (calloc).
      */
     Matrix *matrix = malloc(sizeof(*matrix));
 
@@ -34,14 +35,15 @@ matrix_clone(Matrix *matrix)
 {   /* Take an already initialized matrix and clone it into a new matrix.
      * Then point the return a pointer to the clone.
      */
-    int row, col;
+    int row, col, numcells;
     Matrix *clone = malloc(sizeof(*clone));
 
     // allocate enough cells to fit contents of existing matrix
-    clone->cells = calloc(matrix->row_cap * matrix->col_cap, sizeof(cell_t));
+    numcells = matrix_cap(matrix);
+    clone->cells = calloc(numcells, sizeof(cell_t));
 
     // copy contents of cells over
-    memcpy(clone->cells, matrix->cells, matrix_cap(matrix));
+    memcpy(clone->cells, matrix->cells, numcells);
 
     // copy over remaining metadata
     clone->num_rows = matrix->num_rows;
@@ -59,6 +61,14 @@ matrix_free(Matrix *matrix)
     free(matrix->cells);
     free(matrix);
     matrix = NULL;
+}
+
+Matrix *
+matrix_reinit(Matrix *matrix)
+{   /* Free the matrix, then reinitialize to an empty matrix.
+     */
+    matrix_free(matrix);
+    return matrix_init(matrix);
 }
 
 cell_t
@@ -113,7 +123,7 @@ matrix_alloc_col(Matrix *matrix)
     int numcols, row, col, idx, row_shift, numcells;
 
     numcols = matrix->col_cap * 2;
-    numcells = matrix->col_cap * matrix->row_cap;
+    numcells = matrix_cap(matrix);
     matrix->cells = realloc(matrix->cells, sizeof(cell_t) * numcells);
 
     // shift values to accommodate new columns start from the end of the array

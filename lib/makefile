@@ -1,5 +1,5 @@
-mtest: matrix.c matrix-test.c
-	gcc -g matrix.c matrix-test.c -o mtest
+mtest: log.c unittest.c matrix.c matrix-test.c
+	gcc -g log.c unittest.c matrix.c matrix-test.c -o mtest
 
 test: mtest
 	./mtest

@@ -45,6 +45,8 @@ Matrix * matrix_clone(Matrix *matrix);
 
 void matrix_free(Matrix *matrix);
 
+Matrix * matrix_reinit(Matrix *matrix);
+
 cell_t matrix_get(Matrix *matrix, int row, int col);
 
 void matrix_set(Matrix *matrix, int row, int col, cell_t val);
