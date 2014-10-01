@@ -56,6 +56,7 @@ EOL_T   "\n"
 
 <PBODY_S>{NT_T}             {BEGIN RULE_S; return NT;}
 <PBODY_S>{T_T}              {BEGIN RULE_S; return T; }
+<PBODY_S>{EOL_T}            {BEGIN RULE_S; return EOL; }
 
 <RULE_S>{NT_T}              {return NT;}
 <RULE_S>{T_T}               {return T;}
@@ -68,6 +69,12 @@ EOL_T   "\n"
 
 <PLIST_MORE_S>{NT_T}        {BEGIN PROD_S; return NT; }
 
+{NT_T}                      {return NT;}
+{T_T}                       {return T;}
+{GOES_T}                    {return GOES;}
+{SEMI_T}                    {return SEMI;}
+{OR_T}                      {return OR;}
+{EOL_T}                     {lineno++;}
 .                           ;
 
 %%

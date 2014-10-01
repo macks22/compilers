@@ -51,7 +51,7 @@ PLIST()
 void
 PLIST_MORE()
 {
-    printf("PLIST_MORE\n");
+    printf("PLIST_MORE\n\n");
     if (lookahead == NT) { PROD(); PLIST_MORE(); }
     else if (lookahead == 0) return;  /* EOF */
     else error("PLIST_MORE");
