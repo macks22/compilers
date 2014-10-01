@@ -1,3 +1,4 @@
+void log_msg(char *fmt, ...);
 void error(char *where);
 void match(int token);
 
