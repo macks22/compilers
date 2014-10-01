@@ -47,6 +47,8 @@ GOES_T  "-->"
 SEMI_T  ";"
 OR_T    "|"
 EOL_T   "\n"
+WS_T    [ \t]
+OTHER_T [^a-zA-Z n\t;|]
 
 %%
 
@@ -75,6 +77,7 @@ EOL_T   "\n"
 {SEMI_T}                    {return SEMI;}
 {OR_T}                      {return OR;}
 {EOL_T}                     {lineno++;}
-.                           ;
+{WS_T}                      ;
+{OTHER_T}                   {return OTHER;}
 
 %%

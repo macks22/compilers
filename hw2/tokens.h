@@ -4,3 +4,4 @@
 #define SEMI 4
 #define OR   5
 #define EOL  6
+#define OTHER -1

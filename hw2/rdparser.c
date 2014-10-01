@@ -33,7 +33,11 @@ void
 error(char *where)
 {
     printf("Syntax error line %d: %s\n", lineno, where);
-    printf("Token seen: %s\n", symtable[lookahead]);
+    if (lookahead != OTHER) {
+        printf("Token seen: %s\n", symtable[lookahead]);
+    } else {
+        printf("Token seen: undefined in langauge\n");
+    }
     exit(42);
 }
 
