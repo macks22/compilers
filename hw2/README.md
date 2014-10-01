@@ -120,10 +120,13 @@ states for actually building up the grammar here.
 
 Is the input language already specified by an LL grammar? We can show that a
 grammar is not LL by looking at predict sets; PREDICT sets for a given
-non-terminal are disjoint for an LL grammar.  Otherwise the grammar is not LL
-and needs to be converted into an LL grammar using one or both of the following
-2 methods. The second method is more reliable and is used exclusively for this
-assignment.
+non-terminal are disjoint for an LL grammar. 
+
+#### Converting to LL
+
+If the grammar is not LL, it will need to be converted into an LL grammar using
+one or both of the following 2 methods. The second method is more reliable and
+is used exclusively for this assignment.
 
 1.  Eliminate common prefixes:
     A  --> BaCD | BaCE
@@ -208,7 +211,7 @@ grammar is now LL using PREDICT sets just to be sure. Note: e = $\epsilon$ below
  IPL         {NT}         {$}
  IPL'        {NT,e}       {FOLLOW(IPL)} = {$}
  IPB         {NT,T,EOL}   {SEMI}
- IPB'        {OR,e}       {}
+ IPB'        {OR,e}       {FOLLOW(IPB)} = {SEMI}
  IP          {NT}         {FIRST(IPL'),FOLLOW(IPL),FOLLOW(IPL')} = {NT,$}
  IR          {NT,T,EOL}   {FIRST(IPB'),FOLLOW(IPB),FOLLOW(IPB')} = {OR,SEMI}
 
@@ -219,7 +222,7 @@ grammar is now LL using PREDICT sets just to be sure. Note: e = $\epsilon$ below
    3   IPL' :  e                        FOLLOW(IPL') = {$}
    4   IPB  :  IR IPB'                  FIRST(IR)    = {NT,T,EOL}
    5   IPB' :  OR IR IPB'               FIRST(OR)    = {OR}
-   6   IPB' :  e                        FOLLOW(IPB') = {}
+   6   IPB' :  e                        FOLLOW(IPB') = {SEMI}
    7   IP   :  NT GOES IPB SEMI EOL     FIRST(NT)    = {NT}
    8   IR   :  NT IR                    FIRST(NT)    = {NT}
    9   IR   :  T IR                     FIRST(T)     = {T}
@@ -228,12 +231,55 @@ grammar is now LL using PREDICT sets just to be sure. Note: e = $\epsilon$ below
 Since the PREDICT sets of each non-terminal are disjoint amongst themselves, we
 know the grammar is LL(1).
 
-Finally, we construct a DFA for the grammar defined by the productions above,
-introducing one additional state, IE, for "input expecting EOL token". This
-will be used when processing production #7, in order to handle the SEMI EOL
-termination.
+Finally, if we want to use states, we construct a DFA for the grammar defined
+by the productions above, introducing one additional state, IE, for "input
+expecting EOL token". This will be used when processing production #7, in order
+to handle the SEMI EOL termination.
 
-### Req3
+  NUM  PRODUCTION                       PREDICT
+ ----  ------------------------------   ------------------------
+   1   IPL  :  IP IPL'                  {NT}
+   2   IPL' :  IP IPL'                  {NT}
+   3   IPL' :  e                        {$}
+   4   IPB  :  IR IPB'                  {NT,T,EOL}
+   5   IPB' :  OR IR IPB'               {OR}
+   6   IPB' :  e                        {SEMI}
+   7   IP   :  NT GOES IPB SEMI IE      {NT}
+   8   IE   :  EOL                      {EOL}
+   9   IR   :  NT IR                    {NT}
+  10   IR   :  T IR                     {T}
+  11   IR   :  EOL                      {EOL}
+
+FIRST(IE) = {EOL}    FOLLOW(IE) = {NT,$}    PREDICT(IE) = {EOL}
+
+The states in this design doc are translated to slightly more readable forms in
+the actual lex specification:
+
+ SYMBOL   STATE
+ -------  -------
+ IPL      PLIST (INITIAL)
+ IPL'     PLIST_MORE
+ IPB      PBODY
+ IPB'     PBODY_MORE
+ IP       PROD
+ IR       RULE
+ IE       EXP_EOL
+
+### Req3 (Recursive Descent Parser)
+
+After the above transformations, we have the final LL(1) grammar to use for the
+recursive descent parser:
+
+PLIST  :  PROD PLIST'              {NT}
+PLIST' :  PROD PLIST'              {NT}
+PLIST' :  e                        {$}
+PBODY  :  RULE PBODY_MORE          {NT,T,EOL}
+PBODY_MORE :  OR RULE PBODY_MORE   {OR}
+PBODY_MORE :  e                    {SEMI}
+PROD   :  NT GOES PBODY SEMI EOL   {NT}
+RULE   :  NT RULE                  {NT}
+RULE   :  T RULE                   {T}
+RULE   :  EOL                      {EOL}
 
 For this req., simply translate each production in the LL(1) version of the
 grammar above into a function. There will be 10 functions, one for each
