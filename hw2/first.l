@@ -1,5 +1,6 @@
 %{
-
+#include "tokens.h"
+int lineno = 1;
 %}
 
 /* Before the first non-terminal is parsed; used in place of _prod_list_
@@ -12,69 +13,61 @@
 /* At least one production encountered so far; only valid finish state.
  * IPL' in design doc.
  */
-%s PLIST_MORE
+%s PLIST_MORE_S
 
 /* Encountered first NT and expecting a GOES.
  * IP in design doc.
  */
-%s PROD
+%s PROD_S
 
 /* Encountered GOES, now expecting T or NT to start a rule.
  * IPB in design doc.
  */
-%s PBODY
+%s PBODY_S
 
 /* Encountered first T or NT of rule, now expecting more T/NT tokens, or an EOL
  * to indicate the rule is complete.
  * IR in design doc.
  */
-%s RULE
+%s RULE_S
 
 /* Encountered first rule, now expecting an OR or a SEMI.
  * IPB' in design doc.
  */
-%s PBODY_MORE
+%s PBODY_MORE_S
 
 /* Encountered a SEMI, now expecting an EOL; all else is discarded.
  * IE in design doc.
  */
-%s E_EOL
+%s EXP_EOL_S
 
-NT_TOKEN    [A-Z]
-T_TOKEN     [a-z]
-GOES_TOKEN  "-->"
-SEMI_TOKEN  ";"
-OR_TOKEN    "|"
-EOL_TOKEN   "\n"
+NT_T    [A-Z]
+T_T     [a-z]
+GOES_T  "-->"
+SEMI_T  ";"
+OR_T    "|"
+EOL_T   "\n"
 
 %%
 
-<INITIAL>{NT_TOKEN}         {printf("PLIST:NT ");
-                             BEGIN PROD;}
+<INITIAL>{NT_T}             {BEGIN PROD_S; return NT;}
 
-<PROD>{GOES_TOKEN}          {printf("PROD:GOES ");
-                             BEGIN PBODY;}
+<PROD_S>{GOES_T}            {BEGIN PBODY_S; return GOES;}
 
-<PBODY>{NT_TOKEN}           {printf("PBODY:NT ");
-                             BEGIN RULE;}
-<PBODY>{T_TOKEN}            {printf("PBODY:T ");
-                             BEGIN RULE;}
+<PBODY_S>{NT_T}             {BEGIN RULE_S; return NT;}
+<PBODY_S>{T_T}              {BEGIN RULE_S; return T; }
 
-<RULE>{NT_TOKEN}            {printf("RULE:NT ");}
-<RULE>{T_TOKEN}             {printf("RULE:T ");}
-<RULE>{EOL_TOKEN}           {printf("RULE:EOL\n");
-                             BEGIN PBODY_MORE;}
+<RULE_S>{NT_T}              {return NT;}
+<RULE_S>{T_T}               {return T;}
+<RULE_S>{EOL_T}             {BEGIN PBODY_MORE_S; return EOL; }
 
-<PBODY_MORE>{OR_TOKEN}      {printf("PBODY_MORE:OR ");
-                             BEGIN RULE;}
-<PBODY_MORE>{SEMI_TOKEN}    {printf("PBODY_MORE:SEMI ");
-                             BEGIN E_EOL;}
+<PBODY_MORE_S>{OR_T}        {BEGIN RULE_S; return OR; }
+<PBODY_MORE_S>{SEMI_T}      {BEGIN EXP_EOL_S; return SEMI; }
 
-<E_EOL>{EOL_TOKEN}          {printf("E_EOL:EOL\n");
-                             BEGIN PLIST_MORE;}
+<EXP_EOL_S>{EOL_T}          {BEGIN PLIST_MORE_S; return EOL; }
 
-<PLIST_MORE>{NT_TOKEN}      {printf("PLIST_MORE:NT ");
-                             BEGIN PROD;}
+<PLIST_MORE_S>{NT_T}        {BEGIN PROD_S; return NT; }
 
-<PLIST_MORE><<EOF>>         {printf("ACCEPTED\n"); yyterminate();}
+.                           ;
+
 %%
