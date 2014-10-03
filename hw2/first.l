@@ -1,6 +1,7 @@
 %{
 #include "tokens.h"
 int lineno = 1;
+char *curtext = "";
 %}
 
 /* Before the first non-terminal is parsed; used in place of _prod_list_
@@ -52,32 +53,32 @@ OTHER_T [^a-zA-Z n\t;|]
 
 %%
 
-<INITIAL>{NT_T}             {BEGIN PROD_S; return NT;}
+<INITIAL>{NT_T}             {BEGIN PROD_S; curtext = yytext; return NT;}
 
-<PROD_S>{GOES_T}            {BEGIN PBODY_S; return GOES;}
+<PROD_S>{GOES_T}            {BEGIN PBODY_S; curtext = yytext; return GOES;}
 
-<PBODY_S>{NT_T}             {BEGIN RULE_S; return NT;}
-<PBODY_S>{T_T}              {BEGIN RULE_S; return T; }
-<PBODY_S>{EOL_T}            {BEGIN RULE_S; return EOL; }
+<PBODY_S>{NT_T}             {BEGIN RULE_S; curtext = yytext; return NT;}
+<PBODY_S>{T_T}              {BEGIN RULE_S; curtext = yytext; return T; }
+<PBODY_S>{EOL_T}            {BEGIN RULE_S; curtext = yytext; return EOL; }
 
-<RULE_S>{NT_T}              {return NT;}
-<RULE_S>{T_T}               {return T;}
-<RULE_S>{EOL_T}             {BEGIN PBODY_MORE_S; return EOL; }
+<RULE_S>{NT_T}              {curtext = yytext; return NT;}
+<RULE_S>{T_T}               {curtext = yytext; return T;}
+<RULE_S>{EOL_T}             {BEGIN PBODY_MORE_S; curtext = yytext; return EOL; }
 
-<PBODY_MORE_S>{OR_T}        {BEGIN RULE_S; return OR; }
-<PBODY_MORE_S>{SEMI_T}      {BEGIN EXP_EOL_S; return SEMI; }
+<PBODY_MORE_S>{OR_T}        {BEGIN RULE_S; curtext = yytext; return OR; }
+<PBODY_MORE_S>{SEMI_T}      {BEGIN EXP_EOL_S; curtext = yytext; return SEMI; }
 
-<EXP_EOL_S>{EOL_T}          {BEGIN PLIST_MORE_S; return EOL; }
+<EXP_EOL_S>{EOL_T}          {BEGIN PLIST_MORE_S; curtext = yytext; return EOL; }
 
-<PLIST_MORE_S>{NT_T}        {BEGIN PROD_S; return NT; }
+<PLIST_MORE_S>{NT_T}        {BEGIN PROD_S; curtext = yytext; return NT; }
 
-{NT_T}                      {return NT;}
-{T_T}                       {return T;}
-{GOES_T}                    {return GOES;}
-{SEMI_T}                    {return SEMI;}
-{OR_T}                      {return OR;}
+{NT_T}                      {curtext = yytext; return NT;}
+{T_T}                       {curtext = yytext; return T;}
+{GOES_T}                    {curtext = yytext; return GOES;}
+{SEMI_T}                    {curtext = yytext; return SEMI;}
+{OR_T}                      {curtext = yytext; return OR;}
 {EOL_T}                     {lineno++;}
 {WS_T}                      ;
-{OTHER_T}                   {return OTHER;}
+{OTHER_T}                   {curtext = yytext; return OTHER;}
 
 %%

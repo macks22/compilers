@@ -293,8 +293,12 @@ some sort of set data structure is also likely to be useful. For the linked
 list, we'll want to use single linking and have each node contain a char array,
 since it will be holding the RHS of the production.
 
-1.  Singly linked list of nodes with 1 data slot for char array.
+1.  Array of singly linked list of nodes with 1 data slot for char array.
 2.  Set
+
+It turned out that after implementing the first data structure (called Plist)
+in the code, for "production list", a simple `plist_unique_add` suffices to
+implement a set-like data structure for FIRST sets.
 
 ### Req5 (Algorithms)
 
@@ -312,6 +316,8 @@ Initially FIRST(A) (for all A) is empty
 4.  For productions A --> a, where a --> *e
     -   Add FIRST(a) and { e } to FIRST(A)
 
-
 # Testing
 
+There are test modules for each data structure used. For the actual first set
+computation, outputs were compared manually using the given executable for this
+lab.

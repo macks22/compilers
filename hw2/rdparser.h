@@ -1,3 +1,7 @@
+#include "lib/plist.h"
+
+Plist * compute_first_sets(Plist *plist);
+void update_plist();
 void log_msg(char *fmt, ...);
 void error(char *where);
 void match(int token);
