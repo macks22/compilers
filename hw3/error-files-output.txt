@@ -1,0 +1,45 @@
+white@Zeuz$ uncool < scope_error1.uc
+Line 3: Duplicate attribute definition: s
+Line 7: Unknown identifier x
+Errors found: 2
+
+white@Zeus$ uncool < scope_error2.uc
+Line 6: Duplicate parameter name: x
+Line 8: Unknown identifier z
+Line 13: Duplicate identifier in current scope: x
+Line 15: Unknown method f1 for current class
+Line 18: Unknown identifier y
+Errors found: 5
+
+white@Zeus$ uncool < type_error1.uc
+Line 3: Type mismatch in identifier initialization: x
+Line 6: Type mismatch in assignment statement: y
+Line 7: * operator expects integer operands
+Line 9: Type mismatch in assignment statement: z
+Line 10: - operator expects integer operands
+Errors found: 5
+
+white@Zeus$ uncool < type_error2.uc
+Line 8: Type mismatch in assignment statement: y
+Line 9: out_int expects integer parameter
+Line 19: Wrong number of parameters: f
+Line 20: Type mismatch in assignment statement: y
+Line 21: out_int expects integer parameter
+Errors found: 5
+white@Zeus$ uncool < type_error3.uc
+Line 7: While predicate must be type boolean
+Line 9: Type mismatch in assignment statement: x
+Line 30: Branches of if statement must match
+Line 35: Function body does not match declared type: smallest
+Line 44: Dereferencing non-array type: t
+Errors found: 5
+
+white@Zeus$ uncool < type_error4.uc
+Line 31: Unknown class Stack1
+Line 34: Unknown class Stack2
+Line 34: Type mismatch in assignment statement: st
+Line 35: Wrong number of parameters: push
+Line 36: Unknown method push for current class
+Line 37: Unknown method pushy for current class
+Line 38: Wrong number of parameters: pop
+Errors found: 7
