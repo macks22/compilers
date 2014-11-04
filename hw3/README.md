@@ -93,7 +93,7 @@ to check types, the following information must be available:
     -   a scope will be represented by a symbol table
         +   a symbol is a string identifier; these serve as hash table keys
         +   the values indexed by symbols are structs
-        +   each struct contains the token and type
+        +   each struct contains the token, type, and value
         +   the underlying table will be a 2D lookup table built on a dynamic 1D
             array
         +   2 hash tables will be used in addition in order to index into the
@@ -122,14 +122,17 @@ Lexical units in UnCool are:
 1.  Integers: non-empty strings of digits 0-9
     -   only used as constants in expressions
 2.  Declarations: 3 types
-    1.  class, starts with capital letter
+    1.  class
+        -   PATTERN: starts with capital letter, prefaced by "class" keyword
         -   ACTION: create new scope to store class methods/attributes; store
             the scope in the global symbol table
-    2.  method, starts with lowercase letter and followed by parens
+    2.  method
+        -   PATTERN: starts with lowercase letter, followed by parens ":" TYPE
         -   ACTION: store new method in symbol table for current class scope.
             +   If current scope is not a class scope, raise an error.
             +   Store type and # args for each method declaration.
-    3.  attribute, starts with lowercase letter, not followed by parens
+    3.  attribute
+        -   PATTERN: starts with lowercase letter, followed by ":" TYPE
         -   ACTION: store in current scope
 3.  References: 3 types
     1.  class, search global symbol table for class scope
@@ -157,6 +160,7 @@ Lexical units in UnCool are:
     5.  ';':  as terminals for expressions and lists of feature
     6.  ':':  after id in declaration to preface type
     7.  '<-': assignment operator
+    8.  ',':  between feature declarations in method declaration or let stmt
 5.  Operators: used in expressions
     -   binary
         +   arithmetic: (+,-,\*)
