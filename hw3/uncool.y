@@ -25,87 +25,87 @@ extern int linect;
 
 %%
 
-program 	:	program class
-            |	class
+program     :    program class
+            |    class
             ;
 
-class		:	CLASS_T TYPE '{' feature_list '}'
+class       :    CLASS_T TYPE '{' feature_list '}'
             ;
 
-feature_list	:	feature_list feature ';'
+feature_list    :    feature_list feature ';'
                 |
                 ;
 
-feature		:	ID '( ' formal_list ')' ':' typename '{' expr_list  '}'	
-            |	ID '( ' ')' ':' typename '{' expr_list  '}'	
-            | 	ID ':' typename 
-            | 	ID ':' typename ASSIGN simple_constant 
-            | 	ID ':' STRING_T ASSIGN STRING_CONST 
-            | 	ID ':' INT_T '[' ']'  
+feature     :    ID '(' formal_list ')' ':' typename '{' expr_list  '}'
+            |    ID '(' ')' ':' typename '{' expr_list  '}'
+            |    ID ':' typename
+            |    ID ':' typename ASSIGN simple_constant
+            |    ID ':' STRING_T ASSIGN STRING_CONST
+            |    ID ':' INT_T '[' ']'
             ;
 
-typename	:	INT_T
-            |	BOOL_T
-            |	STRING_T
-            |	TYPE
+typename    :    INT_T
+            |    BOOL_T
+            |    STRING_T
+            |    TYPE
             ;
 
-simple_constant	:	INT_CONST
-                |	TRUE_T
-                |	FALSE_T
+simple_constant :    INT_CONST
+                |    TRUE_T
+                |    FALSE_T
                 ;
 
-formal_list	:	formal_list ',' formal
-                |	formal
+formal_list     :    formal_list ',' formal
+                |    formal
                 ;
 
-formal		:	ID ':' typename 
-            | 	ID ':' INT_T '[' ']'  	
+formal      :    ID ':' typename
+            |    ID ':' INT_T '[' ']'
             ;
 
-expr		:	ID ASSIGN  expr	
-            |  	ID '[' expr ']'  ASSIGN  expr 	
-            | 	ID '.' ID'(' ')'	
-            | 	ID '.' ID'(' actual_list ')'	
-            | 	ID '(' ')'	
-            | 	ID '(' actual_list ')'	
-            |	IN_INT '(' ')'
-            |	OUT_STRING '(' expr ')'
-            |	OUT_INT '(' expr ')'
-            |	ID
-            |	ID '[' expr ']'
-            | 	IF_T expr THEN_T expr ELSE_T expr FI_T 
-            | 	WHILE_T expr  LOOP_T expr POOL_T 
-            | 	'{'    expr_list '}'	
-            | 	LET_T  formal_list  IN_T expr TEL_T 	
-            | 	NEW_T TYPE '(' ')'	
-            | 	NEW_T TYPE '(' actual_list ')'	
-            |  	NEW_T INT_T '[' expr ']' 	
-            | 	ISVOID_T expr	
-            | 	expr  '+' expr	
-            | 	expr  '-' expr	
-            | 	expr  '*' expr	
-            | 	'~' expr  %prec UC	
-            |	NOT_T expr  %prec UM
-            | 	expr NE expr	
-            | 	expr GT expr	
-            | 	expr GE expr	
-            | 	expr LT expr	
-            | 	expr LE expr	
-            | 	expr EQ expr	
-            |	'(' expr ')'
-            |	TRUE_T 
-            |	FALSE_T 
-            |	INT_CONST	
-            |	STRING_CONST
+expr        :    ID ASSIGN  expr
+            |    ID '[' expr ']'  ASSIGN  expr
+            |    ID '.' ID'(' ')'
+            |    ID '.' ID'(' actual_list ')'
+            |    ID '(' ')'
+            |    ID '(' actual_list ')'
+            |    IN_INT '(' ')'
+            |    OUT_STRING '(' expr ')'
+            |    OUT_INT '(' expr ')'
+            |    ID
+            |    ID '[' expr ']'
+            |    IF_T expr THEN_T expr ELSE_T expr FI_T
+            |    WHILE_T expr  LOOP_T expr POOL_T
+            |    '{'    expr_list '}'
+            |    LET_T  formal_list  IN_T expr TEL_T
+            |    NEW_T TYPE '(' ')'
+            |    NEW_T TYPE '(' actual_list ')'
+            |    NEW_T INT_T '[' expr ']'
+            |    ISVOID_T expr
+            |    expr  '+' expr
+            |    expr  '-' expr
+            |    expr  '*' expr
+            |    '~' expr  %prec UC
+            |    NOT_T expr  %prec UM
+            |    expr NE expr
+            |    expr GT expr
+            |    expr GE expr
+            |    expr LT expr
+            |    expr LE expr
+            |    expr EQ expr
+            |    '(' expr ')'
+            |    TRUE_T
+            |    FALSE_T
+            |    INT_CONST
+            |    STRING_CONST
             ;
 
-actual_list	:	actual_list ',' expr
-            |	expr
+actual_list :    actual_list ',' expr
+            |    expr
             ;
 
-expr_list	:	expr_list ';' expr
-            |	expr 
+expr_list   :    expr_list ';' expr
+            |    expr
             ;
 
 %%
