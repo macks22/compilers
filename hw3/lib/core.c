@@ -2,13 +2,14 @@
 //
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "errors.h"
-#include "lib.h"
+#include "core.h"
 
 
 int
-in_class_scope(stack)
+in_class_scope(ScopeStack *stack)
 {   /* 1 if true, else 0. */
     assert(stack != NULL);  // sanity check
     if (stack->local->type == CLASS_SCOPE) {
@@ -18,7 +19,7 @@ in_class_scope(stack)
 }
 
 int
-in_let_scope(stack)
+in_let_scope(ScopeStack *stack)
 {   /* 1 if true, else 0. */
     assert(stack != NULL);  // sanity check
     if (stack->local->type == LET_SCOPE) {
@@ -28,7 +29,7 @@ in_let_scope(stack)
 }
 
 int
-in_global_scope(stack)
+in_global_scope(ScopeStack *stack)
 {   /* 1 if true, else 0.
      * In the global scope only if the scope stack is empty.
      * The stack->local pointer is NULL in this case.
@@ -41,35 +42,35 @@ in_global_scope(stack)
 }
 
 int
-class_exists(stack, name)
+class_exists(ScopeStack *stack, char *name)
 {   /* 1 if true, else 0. */
     assert(stack != NULL);  // sanity check
     return (lookup_class(stack, name) == NULL) ? 0 : 1;
 }
 
 int
-method_exists(class, name)
+method_exists(Scope *class, char *name)
 {   /* 1 if true, else 0. */
     assert(class != NULL);  // sanity check
     return (scope_lookup_symbol(class, name, METHOD) == NULL) ? 0 : 1;
 }
 
 int
-attribute_exists(stack, name)
+attribute_exists(ScopeStack *stack, char *name)
 {   /* 1 if true, else 0. */
     assert(stack != NULL);  // sanity check
     return (lookup_attribute(stack, name) == NULL) ? 0 : 1;
 }
 
 int
-attribute_exists_locally(stack, name)
+attribute_exists_locally(ScopeStack *stack, char *name)
 {   /* 1 if true, else 0.
      * Only the local scope is searched.
      */
     if (in_global_scope) {
         return 0;  // no attributes in global scope
     }
-    else if (scope_lookup_symbol(stack->local, name) == NULL) {
+    else if (scope_lookup_symbol(stack->local, name, ATTRIBUTE) == NULL) {
         return 0;  // not in local scope
     }
     else {
@@ -91,7 +92,7 @@ declare_class(ScopeStack *stack, char *name)
     // at this point, we can simply enter the new class scope
     // the scope will be added to the global scope by the exit_scope
     // function of the scope_stack
-    enter_scope(stack, name, CLASS_SCOPE);
+    enter_scope(stack, CLASS_SCOPE, name);
     return 0;
 }
 
@@ -130,7 +131,7 @@ declare_attribute(ScopeStack *stack, char *name, int type)
 
     // first check for global scope
     if (in_global_scope) {
-        return ATTRIBUTE_DECL_IN_GLOBAL_SCOPE
+        return ATTRIBUTE_DECL_IN_GLOBAL_SCOPE;
     }
 
     // next handle class and let scopes

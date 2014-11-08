@@ -1,7 +1,7 @@
-all: symtable scope global stack lib
+all: symtable scope global stack core
 
-lib: stack lib.c lib-test.c
-	gcc -g symtable.c scope.c global.c scope_stack.c lib.c lib-test.c -o lib
+core: stack core.c core-test.c
+	gcc -g symtable.c scope.c global.c scope_stack.c core.c core-test.c -o core
 
 stack: scope scope_stack.c scope-stack-test.c
 	gcc -g symtable.c scope.c global.c scope_stack.c scope-stack-test.c -o stack

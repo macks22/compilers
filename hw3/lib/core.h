@@ -19,6 +19,8 @@ int method_exists(Scope *class, char *name);
 
 int attribute_exists(ScopeStack *stack, char *name);
 
+int attribute_exists_locally(ScopeStack *stack, char *name);
+
 int declare_class(ScopeStack *stack, char *name);
 
 int declare_method(ScopeStack *stack, char *name, int type);

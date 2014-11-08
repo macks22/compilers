@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include "lib.h"
+#include "core.h"
 
 
 int main()
