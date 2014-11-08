@@ -28,13 +28,3 @@ Scope * scope_stack_pop(ScopeStack *stack);
 void enter_scope(ScopeStack *stack, scope_type type, char *name);
 
 void exit_scope(ScopeStack *stack);
-
-Scope * lookup_class(ScopeStack *stack, char *name);
-
-Symbol * lookup_method(ScopeStack *stack, char *class_name, char *method_name);
-
-Symbol * lookup_attribute(ScopeStack *stack, char *name);
-
-void declare_method(ScopeStack *stack, char *name);
-
-void declare_attribute(ScopeStack *stack, char *name);

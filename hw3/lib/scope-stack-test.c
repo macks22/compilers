@@ -48,11 +48,6 @@ main()
     assert(stack->size == 0);
     assert(stack->global->size == 1);
 
-    tmp_scope = lookup_class(stack, "TEST");
-    assert(tmp_scope != NULL);
-    assert(tmp_scope->name == "TEST");
-    free(tmp_scope);
-
     size = stack->size;
     stack->size = stack->cap;
     scope_stack_double_cap_if_full(stack);
