@@ -67,6 +67,29 @@ symtable_add_symbol(Symtable *symtable, char *name, int type,
     symtable->symbols[symtable->size++] = symbol;
 }
 
+int
+symtable_overwrite_symbol(Symtable *symtable, char *name, int type,
+                          declaration_type decl_type)
+{   /* Overwrite an existing symbol.
+     * If the symbol is found, it's type will be replaced.
+     * This is considered an ovewrite, and a 1 will be returned.
+     * If the symbol is not found, no action is taken and a 0 is returned.
+     */
+    assert(symtable != NULL);  // sanity check
+
+    int i;
+    Symbol *sym;
+
+    for (i = 0; i < symtable->size; i++) {
+        sym = symtable->symbols[i];
+        if (strcmp(sym->name, name) == 0 && sym->decl_type == decl_type) {
+            symtable->symbols[i]->type = type;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void
 symtable_double_cap_if_full(Symtable *symtable)
 {   /* Check if cap is reached; if so, double # allocations and update cap.
@@ -78,7 +101,7 @@ symtable_double_cap_if_full(Symtable *symtable)
 }
 
 Symbol *
-symtable_lookup(Symtable *symtable, char *name)
+symtable_lookup(Symtable *symtable, char *name, declaration_type decl_type)
 {   /* Look up a symbol in the table.
      * Return NULL if it is not found.
      */
@@ -89,7 +112,7 @@ symtable_lookup(Symtable *symtable, char *name)
 
     for (i = 0; i < symtable->size; i++) {
         sym = symtable->symbols[i];
-        if (strcmp(sym->name, name) == 0) {
+        if (strcmp(sym->name, name) == 0 && sym->decl_type == decl_type) {
             return sym;
         }
     }

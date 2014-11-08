@@ -43,10 +43,22 @@ scope_add_symbol(Scope *scope, char *name, int type, declaration_type decl_type)
     symtable_add_symbol(scope->symtable, name, type, decl_type);
 }
 
+int
+scope_overwrite_symbol(Scope *scope, char *name, int type,
+                       declaration_type decl_type)
+{   /* Look up the symbol by name and declaration type.
+     * If not found, return 0.
+     * Otherwise, replace the type of the existing symbol with the new type.
+     * Return 1 if successful.
+     */
+    assert(scope != NULL);  // sanity check
+    return symtable_overwrite_symbol(scope->symtable, name, type, decl_type);
+}
+
 Symbol *
-scope_lookup_symbol(Scope *scope, char *name)
+scope_lookup_symbol(Scope *scope, char *name, declaration_type decl_type)
 {   /* Look up a symbol in the scope.
      */
     assert(scope != NULL);  // sanity check
-    return symtable_lookup(scope->symtable, name);
+    return symtable_lookup(scope->symtable, name, decl_type);
 }

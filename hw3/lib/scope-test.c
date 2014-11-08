@@ -12,17 +12,17 @@ main()
     Symbol *sym;
 
     scope = scope_create(CLASS_SCOPE, "Person");
-    scope_add_symbol(scope, "test", 0, CLASS);
+    scope_add_symbol(scope, "test", 0, ATTRIBUTE);
 
     // negative test
-    sym = scope_lookup_symbol(scope, "nothing here");
+    sym = scope_lookup_symbol(scope, "nothing here", ATTRIBUTE);
     assert(sym == NULL);
 
     // positive test
-    sym = scope_lookup_symbol(scope, "test");
+    sym = scope_lookup_symbol(scope, "test", ATTRIBUTE);
     assert(sym->name == "test");
     assert(sym->type == 0);
-    assert(sym->decl_type == CLASS);
+    assert(sym->decl_type == ATTRIBUTE);
 
     scope_destroy(scope);
     free(sym);

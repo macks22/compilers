@@ -20,7 +20,11 @@ Scope * scope_create(scope_type type, char *name);
 
 void scope_destroy(Scope *scope);
 
-void scope_add_symbol(Scope *scope, char *name, int data_type,
+void scope_add_symbol(Scope *scope, char *name, int type,
                       declaration_type decl_type);
 
-Symbol * scope_lookup_symbol(Scope *scope, char *name);
+int scope_overwrite_symbol(Scope *scope, char *name, int type,
+                           declaration_type decl_type);
+
+Symbol * scope_lookup_symbol(Scope *scope, char *name,
+                             declaration_type decl_type);

@@ -8,6 +8,7 @@
 int
 main()
 {
+    int flag;
     Symtable *symtable;
     Symbol *sym;
 
@@ -26,18 +27,30 @@ main()
     symtable_destroy(symtable);
 
     symtable = symtable_create();
-    symtable_add_symbol(symtable, "test", 0, CLASS);
+    symtable_add_symbol(symtable, "test", 0, METHOD);
     assert(symtable->size == 1);
 
     // negative test
-    assert(symtable_lookup(symtable, "nothing here") == NULL);
+    assert(symtable_lookup(symtable, "nothing here", METHOD) == NULL);
 
     // positive test
-    sym = symtable_lookup(symtable, "test");
+    sym = symtable_lookup(symtable, "test", METHOD);
     assert(sym != NULL);  // returns NULL if not found
     assert(sym->name == "test");
     assert(sym->type == 0);
-    assert(sym->decl_type == CLASS);
+    assert(sym->decl_type == METHOD);
+
+    // negative test, should return 0
+    flag = symtable_overwrite_symbol(symtable, "nothing here", 15, METHOD);
+    assert(flag == 0);
+
+    // positive test, should return 0 and overwrite the type
+    // note that previous type was 0
+    flag = symtable_overwrite_symbol(symtable, "test", 15, METHOD);
+    assert(flag == 1);
+    sym = symtable_lookup(symtable, "test", METHOD);
+    assert(sym->name == "test");
+    assert(sym->type == 15);
 
     symbol_destroy(sym);
     symtable_destroy(symtable);

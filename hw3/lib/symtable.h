@@ -6,7 +6,10 @@
 // can be added as it comes along. We assume each type has an integer identifier
 // which will be used throughout the program.
 
-typedef enum {CLASS, METHOD, ATTRIBUTE} declaration_type;
+// note that a class is actually defined as a scope, so it is not a valid
+// declaration as far as symbols are concerned. They are however a valid
+// declaration in the UnCool spec.
+typedef enum {METHOD, ATTRIBUTE} declaration_type;
 
 typedef struct {
     char *name;                 // the symbol identifier
@@ -45,4 +48,8 @@ void symtable_add_symbol(Symtable *symtable, char *name, int type,
 
 void symtable_double_cap_if_full(Symtable *symtable);
 
-Symbol *symtable_lookup(Symtable *symtable, char *name);
+Symbol *symtable_lookup(Symtable *symtable, char *name,
+                        declaration_type decl_type);
+
+int symtable_overwrite_symbol(Symtable *symtable, char *name, int type,
+                              declaration_type decl_type);
