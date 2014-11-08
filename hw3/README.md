@@ -91,17 +91,14 @@ to check types, the following information must be available:
 
 1.  Scoping
     -   a scope will be represented by a symbol table
+        +   a symbol table will basically be a hash table
         +   a symbol is a string identifier; these serve as hash table keys
         +   the values indexed by symbols are structs
         +   each struct contains the token, type, and value
-        +   the underlying table will be a 2D lookup table built on a dynamic 1D
-            array
-        +   2 hash tables will be used in addition in order to index into the
-            table by strings; one for row index and one for column.
     -   the global scope will be represented by the symbol table on the bottom
         of the stack
-    -   other levels of scope will be represented by subsequent structs on the
-        stack
+    -   other levels of scope will be represented by subsequent symbol tables on
+        the stack.
         +   the top-most scope will be the local scope
 2.  Type Checking
     -   type checking is relatively straightforward given the above data
@@ -111,9 +108,38 @@ to check types, the following information must be available:
         +   for a method, find the related class in the global symbol table,
             then look up the method in the class scope to find the type
         +   for any other identifier, first check the local symbol table (top of
-            stack) for the symbol, then 
+            stack) for the symbol, then recurse down the stack.
 
 Will also want to store scope type: global, class, or let
+
+So in summary, we have the following data structures:
+
+1.  arraylist - foundation for stack and hash table
+2.  stack - used for hierarchical scope representation
+3.  hashtable - foundation for symbol table, built on arraylist
+4.  symtable - the symbol table used to represent scope
+
+Initial approach:
+-----------------
+
+Since the arraylist will be used for multiple purposes, it will be built as a
+generic data structure using void pointers. The hash table will also hold a
+variety of types, so void pointers will be used to make it generic. The symtable
+will be a wrapper on top of the hash table. It will deal with three different
+types of symbol data: class, method, and attribute, where each of these will be
+represented with a struct. Either struct inheritance or generic void pointers
+may be leveraged here. Struct inheritance imposes slightly more structure, so
+that will be used. The stack will simply be a thin wrapper around the arraylist,
+with push and pop methods, as well as some way to inspect subsequent layers of
+the stack.
+
+
+After further consideration:
+----------------------------
+
+It may be useful just to build the stack and hash table from the ground up
+separately, since the arraylist would be used in very different ways --
+essentially requiring completely different methods.
 
 ## Algorithms
 
