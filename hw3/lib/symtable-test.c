@@ -42,12 +42,12 @@ main()
 
     // negative test, should return 0
     flag = symtable_overwrite_symbol(symtable, "nothing here", 15, METHOD);
-    assert(flag == 0);
+    assert(flag == 1);
 
     // positive test, should return 0 and overwrite the type
     // note that previous type was 0
     flag = symtable_overwrite_symbol(symtable, "test", 15, METHOD);
-    assert(flag == 1);
+    assert(flag == 0);
     sym = symtable_lookup(symtable, "test", METHOD);
     assert(sym->name == "test");
     assert(sym->type == 15);

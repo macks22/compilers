@@ -12,10 +12,7 @@ int main()
 
     stack = scope_stack_create();
 
-    tmp_scope = lookup_class(stack, "TEST");
-    assert(tmp_scope != NULL);
-    assert(tmp_scope->name == "TEST");
-    free(tmp_scope);
+    // TEST ALL FUNCTIONS OF LIB.H
 
     scope_stack_destroy(stack);
     return 0;

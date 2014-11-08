@@ -72,8 +72,8 @@ symtable_overwrite_symbol(Symtable *symtable, char *name, int type,
                           declaration_type decl_type)
 {   /* Overwrite an existing symbol.
      * If the symbol is found, it's type will be replaced.
-     * This is considered an ovewrite, and a 1 will be returned.
-     * If the symbol is not found, no action is taken and a 0 is returned.
+     * This is considered an ovewrite, and a 0 will be returned.
+     * If the symbol is not found, no action is taken and a 1 is returned.
      */
     assert(symtable != NULL);  // sanity check
 
@@ -84,10 +84,10 @@ symtable_overwrite_symbol(Symtable *symtable, char *name, int type,
         sym = symtable->symbols[i];
         if (strcmp(sym->name, name) == 0 && sym->decl_type == decl_type) {
             symtable->symbols[i]->type = type;
-            return 1;
+            return 0;
         }
     }
-    return 0;
+    return 1;
 }
 
 void
