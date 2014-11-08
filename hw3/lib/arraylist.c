@@ -1,3 +1,0 @@
-// arraylist.c
-//
-//

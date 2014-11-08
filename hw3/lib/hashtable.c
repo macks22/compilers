@@ -1,3 +1,0 @@
-// hashtable.c
-//
-//
