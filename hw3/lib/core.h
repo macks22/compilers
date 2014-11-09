@@ -13,17 +13,29 @@ int in_let_scope(ScopeStack *stack);
 
 int in_global_scope(ScopeStack *stack);
 
+void enter_let_scope(ScopeStack *stack);
+
 int class_exists(ScopeStack *stack, char *name);
 
+int number_of_classes(ScopeStack *stack);
+
 int method_exists(Scope *class, char *name);
+
+int method_exists_for_class(ScopeStack *stack, char *method_name,
+                            char *class_name);
 
 int attribute_exists(ScopeStack *stack, char *name);
 
 int attribute_exists_locally(ScopeStack *stack, char *name);
 
-int declare_class(ScopeStack *stack, char *name);
+int attribute_exists_for_class(ScopeStack *stack, char *attr_name,
+                               char *class_name);
 
-int declare_method(ScopeStack *stack, char *name, int type);
+int begin_class_declaration(ScopeStack *stack, char *name);
+
+void end_class_declaration(ScopeStack *stack);
+
+int declare_method(ScopeStack *stack, char *name, int type, int argcount);
 
 int declare_attribute(ScopeStack *stack, char *name, int type);
 
