@@ -43,6 +43,7 @@ main()
     enter_scope(stack, CLASS_SCOPE, "TEST");
     assert(stack->size == 1);
     assert(stack->local == stack->scopes[0]);
+    assert(stack->global->size == 1);
 
     exit_scope(stack);
     assert(stack->size == 0);

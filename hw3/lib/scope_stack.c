@@ -98,9 +98,14 @@ void
 enter_scope(ScopeStack *stack, scope_type type, char *name)
 {   /* Create a new scope of the given type and add it to the top
      * of the stack.
+     * This should not be used for classes.
+     * Use `begin_class_declaration` instead.
      */
     assert(stack != NULL);  // sanity check
     Scope *scope = scope_create(type, name);
+    if (type == CLASS_SCOPE) {  // add to global scope
+        global_scope_add_class_scope(stack->global, scope);
+    }
     scope_stack_push(stack, scope);
 }
 
@@ -111,10 +116,9 @@ exit_scope(ScopeStack *stack)
      */
     assert(stack != NULL);  // sanity check
     Scope *scope = scope_stack_pop(stack);
-    if (scope->type == CLASS_SCOPE) {  // add to global scope
-        global_scope_add_class_scope(stack->global, scope);
-    }
-    else {  // free up memory -- we won't be coming back to this scope
+
+    // free up memory if not a class scope
+    if (scope->type != CLASS_SCOPE) {
         scope_destroy(scope);
     }
 }
