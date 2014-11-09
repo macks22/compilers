@@ -23,8 +23,18 @@ void scope_destroy(Scope *scope);
 void scope_add_symbol(Scope *scope, char *name, int type,
                       declaration_type decl_type);
 
+void scope_add_method(Scope *scope, char *name, int type, int argcount);
+
+void scope_add_attribute(Scope *scope, char *name, int type);
+
 int scope_overwrite_symbol(Scope *scope, char *name, int type,
                            declaration_type decl_type);
 
+int scope_overwrite_attribute(Scope *scope, char *name, int type);
+
 Symbol * scope_lookup_symbol(Scope *scope, char *name,
                              declaration_type decl_type);
+
+Symbol * scope_lookup_attribute(Scope *scope, char *name);
+
+Symbol * scope_lookup_method(Scope *scope, char *name);
