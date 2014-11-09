@@ -1,4 +1,4 @@
-// symtabl.h
+// symtable.h
 //
 
 // A symbol is simply some identifier used in UnCool, with the associated type
@@ -11,13 +11,17 @@
 // declaration in the UnCool spec.
 typedef enum {METHOD, ATTRIBUTE} declaration_type;
 
-typedef struct {
+typedef struct _symbol {
     char *name;                 // the symbol identifier
     int type;                   // the data type of the symbol
     declaration_type decl_type; // which type of declaration it is
+    int argcount;               // need this for methods
 } Symbol;
 
-Symbol *symbol_create(char *name, int token, declaration_type type);
+
+Symbol *symbol_create_attribute(char *name, int type);
+
+Symbol *symbol_create_method(char *name, int type, int argcount);
 
 void symbol_destroy(Symbol* symbol);
 
@@ -43,10 +47,17 @@ Symtable *symtable_create();
 
 void symtable_destroy(Symtable *symtable);
 
-void symtable_add_symbol(Symtable *symtable, char *name, int type,
-                         declaration_type decl_type);
+void symtable_add_method(Symtable *symtable, char *name, int type, int argcount);
+
+void symtable_add_attribute(Symtable *symtable, char *name, int type);
+
+void symtable_add_symbol(Symtable *symtable, Symbol *symbol);
 
 void symtable_double_cap_if_full(Symtable *symtable);
+
+Symbol *symtable_lookup_attribute(Symtable *symtable, char *name);
+
+Symbol *symtable_lookup_method(Symtable *symtable, char *name);
 
 Symbol *symtable_lookup(Symtable *symtable, char *name,
                         declaration_type decl_type);

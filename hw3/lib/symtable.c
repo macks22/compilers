@@ -9,15 +9,32 @@
 
 
 Symbol *
-symbol_create(char *name, int type, declaration_type decl_type)
-{   /* Create a new symbol struct and return a pointer to it.
+symbol_create_attribute(char *name, int type)
+{   /* Create a new attribute symbol struct and return a pointer to it.
      */
     Symbol *symbol = calloc(1, sizeof(Symbol));
-
-    // set attributes
+    if (symbol == NULL) {
+        return NULL;
+    }
     symbol->name = name;
     symbol->type = type;
-    symbol->decl_type = decl_type;
+    symbol->decl_type = ATTRIBUTE;
+    symbol->argcount = 0;
+    return symbol;
+}
+
+Symbol *
+symbol_create_method(char *name, int type, int argcount)
+{   /* Create a new method symbol struct and return a pointer to it.
+     */
+    Symbol *symbol = calloc(1, sizeof(Symbol));
+    if (symbol == NULL) {
+        return NULL;
+    }
+    symbol->name = name;
+    symbol->type = type;
+    symbol->argcount = argcount;
+    symbol->decl_type = METHOD;
     return symbol;
 }
 
@@ -51,19 +68,35 @@ void symtable_destroy(Symtable *symtable)
 {   /* Free up all memory associated with the symbol table.
      */
     assert(symtable != NULL);  // sanity check
+    int i;
+    for (i = 0; i < symtable->size; i++) {
+        symbol_destroy(symtable->symbols[i]);
+    }
     free(symtable->symbols);
     free(symtable);
 }
 
 void
-symtable_add_symbol(Symtable *symtable, char *name, int type,
-                    declaration_type decl_type)
-{   /* Add a new symbol to the symbol table.
+symtable_add_method(Symtable *symtable, char *name, int type, int argcount)
+{   /* Create a new method symbol and add it to the symbol table.
      */
     assert(symtable != NULL);  // sanity check
-    symtable_double_cap_if_full(symtable);
+    symtable_add_symbol(symtable, symbol_create_method(name, type, argcount));
+}
 
-    Symbol *symbol = symbol_create(name, type, decl_type);
+void
+symtable_add_attribute(Symtable *symtable, char *name, int type)
+{   /* Create a new attribute symbol and add it to the symbol table.
+     */
+    assert(symtable != NULL);  // sanity check
+    symtable_add_symbol(symtable, symbol_create_attribute(name, type));
+}
+
+void
+symtable_add_symbol(Symtable *symtable, Symbol *symbol)
+{   /* Add a new symbol to the symbol table.
+     */
+    symtable_double_cap_if_full(symtable);
     symtable->symbols[symtable->size++] = symbol;
 }
 
@@ -117,4 +150,20 @@ symtable_lookup(Symtable *symtable, char *name, declaration_type decl_type)
         }
     }
     return NULL;
+}
+
+Symbol *
+symtable_lookup_attribute(Symtable *symtable, char *name)
+{   /* Look up an attribute in the table.
+     * Return NULL if not found.
+     */
+    return symtable_lookup(symtable, name, ATTRIBUTE);
+}
+
+Symbol *
+symtable_lookup_method(Symtable *symtable, char *name)
+{   /* Look up a method in the table.
+     * Return NULL if not found.
+     */
+    return symtable_lookup(symtable, name, METHOD);
 }
