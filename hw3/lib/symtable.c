@@ -167,3 +167,22 @@ symtable_lookup_method(Symtable *symtable, char *name)
      */
     return symtable_lookup(symtable, name, METHOD);
 }
+
+void
+print_symtable(Symtable *symtable)
+{   /* Print out the contents of the scope.
+     */
+    assert(symtable != NULL);  // sanity check
+    int i;
+    Symbol * sym;
+    for (i = 0; i < symtable->size; i++) {
+        sym = symtable->symbols[i];
+        if (is_attribute(sym)) {
+            printf("\t[attribute][%s]: %d\n", sym->name, sym->type);
+        } else {  // method
+            printf("\t[method][%s](%d): %d\n", sym->name, sym->argcount,
+                   sym->type);
+        }
+    }
+}
+

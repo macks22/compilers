@@ -11,13 +11,16 @@
 // declaration in the UnCool spec.
 typedef enum {METHOD, ATTRIBUTE} declaration_type;
 
-typedef struct _symbol {
+typedef struct {
     char *name;                 // the symbol identifier
     int type;                   // the data type of the symbol
     declaration_type decl_type; // which type of declaration it is
     int argcount;               // need this for methods
 } Symbol;
 
+#define is_method(sym) (sym->decl_type == METHOD)
+
+#define is_attribute(sym) (sym->decl_type == ATTRIBUTE)
 
 Symbol *symbol_create_attribute(char *name, int type);
 
@@ -64,3 +67,5 @@ Symbol *symtable_lookup(Symtable *symtable, char *name,
 
 int symtable_overwrite_symbol(Symtable *symtable, char *name, int type,
                               declaration_type decl_type);
+
+void print_symtable(Symtable *symtable);
