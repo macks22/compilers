@@ -23,6 +23,7 @@ scope_create(scope_type type, char *name)
 
     scope->type = type;
     scope->name = name;
+    scope->typetoken = -1;  // not used if not a class scope
     return scope;
 }
 
