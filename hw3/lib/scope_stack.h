@@ -28,3 +28,7 @@ Scope * scope_stack_pop(ScopeStack *stack);
 void enter_scope(ScopeStack *stack, scope_type type, char *name);
 
 void exit_scope(ScopeStack *stack);
+
+char *type_name(ScopeStack *stack, int token);
+
+char *create_type(ScopeStack *stack, int token, char *name);

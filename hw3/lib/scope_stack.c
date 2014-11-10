@@ -122,3 +122,19 @@ exit_scope(ScopeStack *stack)
         scope_destroy(scope);
     }
 }
+
+char *
+type_name(ScopeStack *stack, int token)
+{   /* Look up a type name by its token.
+     */
+    assert(stack != NULL);  // sanity check
+    return global_type_name(stack->global, token);
+}
+
+int
+create_type(ScopeStack *stack, int token, char *name)
+{   /* Create a new type to be held in the global scope.
+     */
+    assert(stack != NULL);  // sanity check
+    return global_create_type(stack->global, token, name);
+}
