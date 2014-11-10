@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <string.h>
 #include "global.h"
+#include "errors.h"
 
 
 GlobalScope *
@@ -21,8 +22,10 @@ global_scope_create()
     if (global->classes == NULL) {
         return NULL;
     }
+
     global->cap = INIT_GLOBAL_SCOPE_CAP;
     global->size = 0;
+    global->typetracker = INIT_TYPE_NUMBER;
     return global;
 }
 
@@ -39,6 +42,28 @@ global_scope_destroy(GlobalScope *global)
     free(global);
 }
 
+int
+global_create_type(GlobalScope *global, int token, char *name)
+{   /* Create a new mapping in the type table.
+     */
+    assert(global != NULL);  // sanity check
+    char *check = global_type_name(global, token);
+    if (check != NULL) {
+        return CLOBBERING_TYPE;
+    }
+    global->typetable[token % MAX_NUMBER_OF_TYPES] = name;
+    return 0;
+}
+
+char *
+global_type_name(GlobalScope *global, int token)
+{   /* Look up the name of the type by its token.
+     * Returns NULL if the token is not found.
+     */
+    assert(global != NULL);  // sanity check
+    return global->typetable[token % MAX_NUMBER_OF_TYPES];
+}
+
 void
 global_scope_create_class_scope(GlobalScope *global, char *name)
 {   /* Add a new class scope to the global scope.
@@ -46,6 +71,9 @@ global_scope_create_class_scope(GlobalScope *global, char *name)
     assert(global != NULL);  // sanity check
     global_scope_double_cap_if_full(global);
     Scope *class = scope_create(CLASS_SCOPE, name);
+    int new_token = global->typetracker++;
+    class->typetoken = new_token;
+    global_create_type(global, new_token, name);
     global->classes[global->size++] = class;
 }
 
@@ -56,6 +84,9 @@ global_scope_add_class_scope(GlobalScope *global, Scope *class)
     assert(global != NULL);  // sanity check
     assert(class != NULL);   // sanity check
     global_scope_double_cap_if_full(global);
+    int new_token = global->typetracker++;
+    class->typetoken = new_token;
+    global_create_type(global, new_token, class->name);
     global->classes[global->size++] = class;
 }
 
@@ -85,4 +116,26 @@ global_class_lookup(GlobalScope *global, char *name)
         }
     }
     return NULL;
+}
+
+void
+print_class(Scope *class)
+{   /* Print out the class name and its contents.
+     */
+    assert(class != NULL);  // sanity check
+    printf("[CLASS SCOPE] %s [type: %d]:\n", class->name, class->typetoken);
+    print_symtable(class->symtable);
+}
+
+void
+print_all_classes(GlobalScope *global)
+{
+    assert(global != NULL);  // sanity check
+    Scope *class;
+    int i;
+    for (i = 0; i < global->size; i++) {
+        class = global->classes[i];
+        print_class(class);
+        printf("\n");
+    }
 }
