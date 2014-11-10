@@ -31,4 +31,4 @@ void exit_scope(ScopeStack *stack);
 
 char *type_name(ScopeStack *stack, int token);
 
-char *create_type(ScopeStack *stack, int token, char *name);
+int create_type(ScopeStack *stack, int token, char *name);
