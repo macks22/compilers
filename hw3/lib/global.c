@@ -119,12 +119,30 @@ global_class_lookup(GlobalScope *global, char *name)
 }
 
 void
-print_class(Scope *class)
+print_scope_contents(GlobalScope *global, Scope *scope)
+{
+    assert(scope != NULL);  // sanity check
+    int i;
+    Symbol *sym;
+    for (i = 0; i < scope->symtable->size; i++) {
+        sym = scope->symtable->symbols[i];
+        if (is_attribute(sym)) {
+            printf("\t[attribute][%s]: %s\n", sym->name,
+                   global_type_name(global, sym->type));
+        } else {  // method
+            printf("\t[method][%s](%d): %s\n", sym->name, sym->argcount,
+                   global_type_name(global, sym->type));
+        }
+    }
+}
+
+void
+print_class(GlobalScope *global, Scope *class)
 {   /* Print out the class name and its contents.
      */
     assert(class != NULL);  // sanity check
-    printf("[CLASS SCOPE] %s [type: %d]:\n", class->name, class->typetoken);
-    print_symtable(class->symtable);
+    printf("[CLASS SCOPE] %s:\n", global_type_name(global, class->typetoken));
+    print_scope_contents(global, class);
 }
 
 void
@@ -135,7 +153,21 @@ print_all_classes(GlobalScope *global)
     int i;
     for (i = 0; i < global->size; i++) {
         class = global->classes[i];
-        print_class(class);
+        print_class(global, class);
         printf("\n");
+    }
+}
+
+
+void
+global_print_type_map(GlobalScope *global)
+{   /* Print out all types with their tokens.
+     */
+    assert(global != NULL);  // sanity check
+    int i;
+    for (i = 0; i < MAX_NUMBER_OF_TYPES; i++) {
+        if (global->typetable[i] != NULL) {
+            printf("%s: %d\n", global->typetable[i], i);
+        }
     }
 }

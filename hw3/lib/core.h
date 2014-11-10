@@ -47,6 +47,8 @@ Symbol * lookup_method(ScopeStack *stack, char *class_name, char *method_name);
 
 Symbol * lookup_attribute(ScopeStack *stack, char *name);
 
-void print_let_scope(Scope *scope);
+void print_let_scope(GlobalScope *global, Scope *scope);
 
 void print_scope_stack(ScopeStack *stack);
+
+void print_type_map(ScopeStack *stack);

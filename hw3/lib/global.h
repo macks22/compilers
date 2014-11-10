@@ -37,6 +37,10 @@ void global_scope_double_cap_if_full(GlobalScope *global);
 
 Scope * global_class_lookup(GlobalScope *global, char *name);
 
-void print_class(Scope *class);
+void print_scope_contents(GlobalScope *global, Scope *scope);
+
+void print_class(GlobalScope *global, Scope *class);
 
 void print_all_classes(GlobalScope *global);
+
+void global_print_type_map(GlobalScope *global);

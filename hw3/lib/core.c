@@ -286,12 +286,12 @@ lookup_attribute(ScopeStack *stack, char *name)
 }
 
 void
-print_let_scope(Scope *scope)
+print_let_scope(GlobalScope *global, Scope *scope)
 {   /* Print out the contents of the let scope.
      */
     assert(scope != NULL);  // sanity check
     printf("[LET SCOPE]:\n");
-    print_symtable(scope->symtable);
+    print_scope_contents(global, scope);
 }
 
 void
@@ -307,9 +307,9 @@ print_scope_stack(ScopeStack *stack)
         for (i = 0; i < stack->size; i++) {
             scope = stack->scopes[i];
             if (is_let_scope(scope)) {
-                print_let_scope(scope);
+                print_let_scope(stack->global, scope);
             } else {
-                print_class(scope);
+                print_class(stack->global, scope);
             }
         }
     }
@@ -318,4 +318,10 @@ print_scope_stack(ScopeStack *stack)
         printf("=================================\n");
         print_all_classes(stack->global);
     }
+}
+
+void
+print_type_map(ScopeStack *stack)
+{
+    global_print_type_map(stack->global);
 }
