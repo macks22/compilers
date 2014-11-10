@@ -1,10 +1,16 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "uncool.tab.h"
-int linect = 1;
+
+int linect = 1;     // keep track of line number
+char *identifier;   // hold actual lexeme for identifiers
+
 %}
+
 %%
+
 Bool		{return BOOL_T;}
 class		{return CLASS_T;}
 else		{return ELSE_T;}
@@ -48,8 +54,8 @@ while		{return WHILE_T;}
 \]		    {return ']';}
 \;		    {return ';';}
 \:		    {return ':';}
-[a-z][A-Za-z0-9_]*	{return ID;}
-[A-Z][A-Za-z0-9_]*	{return TYPE;}
+[a-z][A-Za-z0-9_]*	{identifier = strdup(yytext); return ID;}
+[A-Z][A-Za-z0-9_]*	{identifier = strdup(yytext); return TYPE;}
 [0-9]*		        {return INT_CONST;}
 \"[^"]*\"	        {return STRING_CONST;}
 \-\-.*		;
