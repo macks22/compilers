@@ -1,5 +1,9 @@
-uncool:	lex.yy.c uncool.tab.c
-	gcc -g -o uncool lex.yy.c uncool.tab.c -ly -lfl
+uncool:	lex.yy.c uncool.tab.c core
+	gcc -g -o uncool lex.yy.c uncool.tab.c lib/symtable.c lib/scope.c lib/global.c lib/scope_stack.c lib/core.c -ly -lfl
+
+core: scope lib/core.c
+
+scope: lib/symtable.c lib/scope.c lib/global.c lib/scope_stack.c
 
 lex.yy.c:	uncool.l
 	flex uncool.l
