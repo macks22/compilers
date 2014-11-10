@@ -22,6 +22,19 @@ in_class_scope(ScopeStack *stack)
 }
 
 int
+in_method_scope(ScopeStack *stack)
+{
+    assert(stack != NULL);  // sanity check
+    if (in_global_scope(stack)) {
+        return 0;
+    }
+    else if (is_method_scope(stack->local)) {
+        return 1;
+    }
+    return 0;
+}
+
+int
 in_let_scope(ScopeStack *stack)
 {   /* 1 if true, else 0. */
     assert(stack != NULL);  // sanity check
@@ -168,12 +181,21 @@ end_class_declaration(ScopeStack *stack)
 }
 
 int
-declare_method(ScopeStack *stack, char *name, int type, int argcount)
+begin_method_declaration(ScopeStack *stack, char *name, int type, int argcount)
 {   /* Declare a new method in the current scope.
      * If the current scope is not a class scope, return 0.
-     * Otherwsie return 1.
+     * Otherwise return 1.
      */
     assert(stack != NULL);  // sanity check
+
+    // can't declare methods inside other methods
+    if (in_method_scope(stack)) {
+        return METHOD_DECL_INSIDE_METHOD_DECL;
+    }
+
+    // also can't declare them outside class scopes
+    // the above happens to be a special case of this, so don't change the order
+    // of the if statements unless you want to mask this error
     if (!in_class_scope(stack)) {
         return METHOD_DECL_OUTSIDE_CLASS_SCOPE;
     }
@@ -185,8 +207,24 @@ declare_method(ScopeStack *stack, char *name, int type, int argcount)
     }
 
     // Houston, we have lift off
+    // add method to class scope and pop it onto the stack
     scope_add_method(stack->local, name, type, argcount);
+    enter_scope(stack, METHOD_SCOPE, name);
     return 0;
+}
+
+void
+end_method_declaration(ScopeStack *stack)
+{   /* Simply exit the method scope.
+     * This function has benefits over just calling exit_scope
+     * because it sanity checks the operation in a variety of ways.
+     */
+    assert(stack != NULL);          // sanity check
+    assert(in_method_scope(stack));  // sanity check
+    char *method_name = stack->local->name;
+    exit_scope(stack);
+    assert(class_exists(stack, stack->local->name));
+    assert(method_exists_for_class(stack, method_name, stack->local->name));
 }
 
 int

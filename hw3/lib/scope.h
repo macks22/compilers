@@ -4,10 +4,11 @@
 #include "symtable.h"
 
 // there are 2 different kinds of scopes:
+// 1.  METHOD: can only contain attributes
 // 2.  CLASS: can contain methods and attributes
 // 3.  LET: can only contain attributes
 
-typedef enum {CLASS_SCOPE, LET_SCOPE} scope_type;
+typedef enum {CLASS_SCOPE, LET_SCOPE, METHOD_SCOPE} scope_type;
 
 typedef struct {
     char *name;          // used to hold class names or GLOBAL/LET
@@ -18,6 +19,7 @@ typedef struct {
 
 #define is_class_scope(scope) (scope->type == CLASS_SCOPE)
 #define is_let_scope(scope) (scope->type == LET_SCOPE)
+#define is_method_scope(scope) (scope->type == METHOD_SCOPE)
 
 Scope * scope_create(scope_type type, char *name);
 

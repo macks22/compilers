@@ -9,6 +9,8 @@
 
 int in_class_scope(ScopeStack *stack);
 
+int in_method_scope(ScopeStack *stack);
+
 int in_let_scope(ScopeStack *stack);
 
 int in_global_scope(ScopeStack *stack);
@@ -34,6 +36,10 @@ int attribute_exists_for_class(ScopeStack *stack, char *attr_name,
 int begin_class_declaration(ScopeStack *stack, char *name);
 
 void end_class_declaration(ScopeStack *stack);
+
+int begin_method_declaration(ScopeStack *stack, char *name, int type, int argcount);
+
+void end_method_declaration(ScopeStack *stack);
 
 int declare_method(ScopeStack *stack, char *name, int type, int argcount);
 

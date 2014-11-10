@@ -42,6 +42,10 @@ int main()
     assert(in_let_scope(stack));
     enter_scope(stack, CLASS_SCOPE, "CLASS");
     assert(in_class_scope(stack));
+    enter_scope(stack, METHOD_SCOPE, "METHOD");
+    assert(in_method_scope(stack));
+    exit_scope(stack);
+    assert(in_class_scope(stack));
     exit_scope(stack);
     assert(in_let_scope(stack));
     exit_scope(stack);
@@ -75,9 +79,12 @@ int main()
     flag = declare_attribute(stack, "name", STRING);
     assert(flag == DUPLICATE_ATTRIBUTE);
 
-    flag = declare_method(stack, "say_hello", STRING, 2);
+    flag = begin_method_declaration(stack, "say_hello", STRING, 2);
     assert(flag == 0);
-    flag = declare_method(stack, "say_hello", STRING, 2);
+    flag = begin_method_declaration(stack, "say_hello", STRING, 2);
+    assert(flag == METHOD_DECL_INSIDE_METHOD_DECL);
+    end_method_declaration(stack);
+    flag = begin_method_declaration(stack, "say_hello", STRING, 2);
     assert(flag == DUPLICATE_METHOD);
 
     end_class_declaration(stack);
@@ -92,7 +99,7 @@ int main()
     assert(in_global_scope(stack));
     flag = declare_attribute(stack, "buggy", INT);
     assert(flag == ATTRIBUTE_DECL_IN_GLOBAL_SCOPE);
-    flag = declare_method(stack, "still_buggy", INT_ARR, 3);
+    flag = begin_method_declaration(stack, "still_buggy", INT_ARR, 3);
     assert(flag == METHOD_DECL_OUTSIDE_CLASS_SCOPE);
 
     enter_let_scope(stack);
@@ -120,12 +127,14 @@ int main()
     // ====================================================
     stack = scope_stack_create();
     begin_class_declaration(stack, "Person");
-    declare_method(stack, "say_hello", INT, 1);
+    begin_method_declaration(stack, "say_hello", INT, 1);
+    end_method_declaration(stack);
     declare_attribute(stack, "name", STRING);
-    declare_method(stack, "say_goodbye", INT, 0);
+    begin_method_declaration(stack, "say_goodbye", INT, 0);
+    end_method_declaration(stack);
     end_class_declaration(stack);
     class = lookup_class(stack, "Person");
-    print_class(class);
+    print_class(stack->global, class);
 
     enter_let_scope(stack);
     declare_attribute(stack, "x", INT);
