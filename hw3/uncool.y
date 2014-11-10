@@ -1,8 +1,21 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include "lib/errors.h"
+#include "lib/core.h"
+
+#define INT_ARR_T 120
+
+void error(int errtoken, ...);
+int wdeclare_attribute(int type);
+int wdeclare_method(int type, int argcount);
 
 extern int linect;
+extern char *identifier;
+
+int cflag, flag;
+ScopeStack *stack;
 
 %}
 
@@ -25,14 +38,26 @@ extern int linect;
 
 %%
 
+
 program     :    program class
             |    class
             ;
 
-class       :    CLASS_T TYPE '{' feature_list '}'
+class       :    CLASS_T TYPE
                     {/* Class declaration
                       * New type being created.
                       */
+                      cflag = begin_class_declaration(stack, identifier);
+                      if (cflag == CLASS_DECL_INSIDE_CLASS_DECL) {
+                          error(cflag, current_class_name(stack));
+                      } else if (cflag) {
+                          error(cflag);
+                      }
+                    }
+                 '{' feature_list '}'
+                    { if (!cflag) {
+                          end_class_declaration(stack);
+                      }
                     }
             ;
 
@@ -44,62 +69,78 @@ feature     :    ID '(' formal_list ')' ':' typename '{' expr_list  '}'
                     {/* Method declaration with 1+ params.
                       */
                     }
-            |    ID '(' ')' ':' typename '{' expr_list '}'
+            |    ID '(' ')' ':' typename
                     {/* Method declaration with 0 params.
                       */
+                      flag = wdeclare_method($5, 0);
+                    }
+                 '{' expr_list '}'
+                    {/* Method declaration with 0 params.
+                      */
+                      if ($5 != $8) {
+                          error(METHOD_BODY_HAS_CONFLICTING_TYPE, $5, $8);
+                      }
                     }
             |    ID ':' typename
                     {/* Attribute declaration, no assignment.
                       */
+                      flag = wdeclare_attribute($3);
                     }
-            |    ID ':' typename ASSIGN simple_constant
-                    {/* Attribute declaration, assignment to int or bool.
-                      */
+            |    ID ':' typename
+                    {/* Attribute declaration, assignment to int or bool. */
+                      flag = wdeclare_attribute($3);
                     }
-            |    ID ':' STRING_T ASSIGN STRING_CONST
-                    {/* Attribute declaration, assignment to string.
-                      */
+                 ASSIGN simple_constant
+                    {/* Assign to the attribute just created. */
+                      if (!flag) {
+                          // TODO: make sure simple_constant type matches
+                      }
+                    }
+            |    ID ':' STRING_T
+                    {/* Attribute declaration, assignment to string. */
+                      flag = wdeclare_attribute($3);
+                    }
+                 ASSIGN STRING_CONST
+                    {/* Assign string constant to attribute just created. */
+                      if (!flag) {
+                          // nothing to do here; string_const always string_t
+                      }
                     }
             |    ID ':' INT_T '[' ']'
-                    {/* Attribute declaration for int array.
-                      */
+                    {/* Attribute declaration for int array. */
+                      flag = wdeclare_attribute(INT_ARR_T);
                     }
             ;
 
-typename    :    INT_T
-            |    BOOL_T
-            |    STRING_T
+typename    :    INT_T { $$ = INT_T; }
+            |    BOOL_T { $$ = BOOL_T; }
+            |    STRING_T { $$ = STRING_T; }
             |    TYPE
+                    { $$ = $1; }
             ;
 
-simple_constant :    INT_CONST
-                        {/* Return type int.
-                          */
-                        }
-                |    TRUE_T
-                        {/* Return type bool.
-                          */
-                        }
-                |    FALSE_T
-                        {/* Return type bool.
-                          */
-                        }
+simple_constant :    INT_CONST { $$ = INT_T; }
+                |    TRUE_T { $$ = BOOL_T; }
+                |    FALSE_T { $$ = BOOL_T; }
                 ;
 
 formal_list     :    formal_list ',' formal
+                        {/* Return parameter count. */
+                            $$ = $1 + $3;
+                        }
                 |    formal
+                        {/* Return parameter count. */
+                            $$ = 1;
+                        }
                 ;
 
 formal      :    ID ':' typename
-                    {/* Declare a new attribute.
-                      * Create new entry in current scope.
-                      * Get type from typename expression and include.
-                      */
+                    {/* Attribute declaration, assignment to int or bool. */
+                      flag = wdeclare_attribute($3);
                     }
             |    ID ':' INT_T '[' ']'
-                    {/* Declare a new int array.
-                      * Create new entry in current scope.
-                      */
+                    {/* Attribute declaration for int array. */
+                      flag = wdeclare_attribute(INT_ARR_T);
                     }
             ;
 
@@ -107,21 +148,23 @@ expr        :    ID ASSIGN expr
                     {/* Assignment to attribute.
                       * return val of expr must be same type as ID
                       */
+                      $$ = $3;
                     }
             |    ID '[' expr ']' ASSIGN expr
                     {/* Assignment to int array
                       * First expr must return int type.
-                      * Second expr must return int type. 
+                      * Second expr must return int type.
                       */
+                      $$ = $6;
                     }
-            |    ID '.' ID'(' ')'
+            |    ID '.' ID '(' ')'
                     {/* Method call using obj name prefix.
                       * Look up object with first ID to get class scope.
                       * Look up method in class to get type and arg count.
                       * If arg count not equal to 0, raise error.
                       */
                     }
-            |    ID '.' ID'(' actual_list ')'
+            |    ID '.' ID '(' actual_list ')'
                     {/* Method call using obj name prefix.
                       * Look up object with first ID to get class scope.
                       * Look up method in class scope to get type & arg count.
@@ -150,12 +193,14 @@ expr        :    ID ASSIGN expr
                       * expr must return a string constant
                       * OUT_STRING returns an int.
                       */
+                      $$ = INT_T;
                     }
             |    OUT_INT '(' expr ')'
                     {/* Output an int.
                       * expr must be an int.
                       * Returns an int.
                       */
+                      $$ = INT_T;
                     }
             |    ID
                     {/* Simple ID reference.
@@ -185,13 +230,15 @@ expr        :    ID ASSIGN expr
                     {/* Series of expr statements.
                       * Return type is return type of last expr.
                       */
+                      $$ = $2;
                     }
-            |    LET_T  formal_list  IN_T expr TEL_T
+            |    LET_T formal_list IN_T expr TEL_T
                     {/* Let statement.
                       * Create new scope to hold formal_list attributes.
                       * These can ONLY be attributes - no methods or classes.
                       * The return type is the return type of expr.
                       */
+                      $$ = $5;
                     }
             |    NEW_T TYPE '(' ')'
                     {/* Create a new object of class TYPE.
@@ -309,33 +356,99 @@ expr        :    ID ASSIGN expr
 
 actual_list :    actual_list ',' expr
                     {/* Need to count the number of expr stmts when
-                      * this shows up in method declarations/calls.
-                      * Occurences in let statements need no special
-                      * consideration.
+                      * this shows up in method calls.
+                      * Does not show up in declarations.
+                      * Occurences in let statements need no special consideration.
                       */
                     }
             |    expr
-                    {/* This would indicate final increment for param count.
-                      * in method declarations/calls.
-                      * Occurences in let statements need no special
-                      * consideration.
+                    {/* This would indicate single parameter for param count
+                      * in method calls.
+                      * Does not show up in declarations.
+                      * Occurences in let statements need no special consideration.
                       */
                     }
             ;
 
 expr_list   :    expr_list ';' expr
+                    { $$ = $3; }
             |    expr
-                    {/* This ends up being the final return type.
-                      */
-                    }
+                    { $$ = $1; }
             ;
 
 %%
 
 main(int argc, char **argv) {
-   yyparse();
+    stack = scope_stack_create();
+    yyparse();
+    print_scope_stack(stack);
 }
 
 yyerror(char *s) {
    printf("Line %d: %s",linect, s);
+}
+
+int wdeclare_attribute(int type)
+{   /* Wrapper to simplify args and error handling.
+     * Relies on global identifier and stack.
+     */
+    flag = declare_attribute(stack, identifier, type);
+    if (flag) error(flag);
+    return flag;
+}
+
+int wdeclare_method(int type, int argcount)
+{   /* Wrapper to simplify args and error handling.
+     * Relies on global identifier and stack.
+     */
+    flag = declare_method(stack, identifier, type, argcount);
+    if (flag) error(flag);
+    return flag;
+}
+
+void
+error(int errtoken, ...)
+{
+    int print_lineno = 1;
+    va_list argp;
+    va_start(argp, errtoken);
+
+    if (errtoken == NO_MAIN_CLASS) {
+        printf("no Main class found\n");
+        print_lineno = 0;
+    } else if (errtoken == NO_MAIN_METHOD) {
+        printf("no main method found in Main class\n");
+        print_lineno = 0;
+    }
+
+    if (errtoken == DUPLICATE_CLASS) {
+        printf("duplicate class declaration [name: %s]", identifier);
+    } else if (errtoken == DUPLICATE_ATTRIBUTE) {
+        printf("duplicate attribute declaration [name: %s]", identifier);
+    } else if (errtoken == DUPLICATE_METHOD) {
+        printf("duplicate method declaration [name: %s']", identifier);
+    } else if (errtoken == METHOD_DECL_OUTSIDE_CLASS_SCOPE) {
+        printf("method declaration outside class scope [name: %s]", identifier);
+    } else if (errtoken == ATTRIBUTE_DECL_IN_GLOBAL_SCOPE) {
+        printf("attribute declaration in global scope [name: %s]", identifier);
+    } else if (errtoken == CLASS_DECL_INSIDE_CLASS_DECL) {
+        printf("class declaration inside declaration of class %s [name: %s]",
+               va_arg(argp, char *), identifier);
+    } else if (errtoken == NO_SUCH_CLASS) {
+        printf("no such class found [name: %s]", identifier);
+    } else if (errtoken == NO_SUCH_ATTRIBUTE) {
+        printf("no such attribute declared [name: %s]", identifier);
+    } else if (errtoken == NO_SUCH_METHOD) {
+        printf("no such method for class [class: %s][method: %s]",
+               va_arg(argp, char *), identifier);
+    } else if (errtoken == METHOD_BODY_HAS_CONFLICTING_TYPE) {
+        printf("method body has conflicting type [method: %s]", identifier);
+        printf("[declared type: %d][body type: %d]",
+               va_arg(argp, int), va_arg(argp, int));
+    }
+
+    va_end(argp);
+    if (print_lineno) {
+        printf("[line %d]\n", linect);
+    }
 }
