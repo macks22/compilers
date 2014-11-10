@@ -1,4 +1,4 @@
-// lib.h
+// core.h
 //
 // This module contains functions which abstract the underlying data structures
 // behind a layer of language specific to handling the parsing of the UnCool
@@ -39,8 +39,14 @@ int declare_method(ScopeStack *stack, char *name, int type, int argcount);
 
 int declare_attribute(ScopeStack *stack, char *name, int type);
 
+char * current_class_name(ScopeStack *stack);
+
 Scope * lookup_class(ScopeStack *stack, char *name);
 
 Symbol * lookup_method(ScopeStack *stack, char *class_name, char *method_name);
 
 Symbol * lookup_attribute(ScopeStack *stack, char *name);
+
+void print_let_scope(Scope *scope);
+
+void print_scope_stack(ScopeStack *stack);

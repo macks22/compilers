@@ -227,6 +227,14 @@ declare_attribute(ScopeStack *stack, char *name, int type)
     return 0;
 }
 
+char *
+current_class_name(ScopeStack *stack)
+{   /* This assumes the local scope is not NULL and is a class scope.
+     * It returns the name of the scope.
+     */
+    return stack->local->name;
+}
+
 Scope *
 lookup_class(ScopeStack *stack, char *name)
 {   /* Search for a declared class scope in the global scope.
@@ -277,3 +285,37 @@ lookup_attribute(ScopeStack *stack, char *name)
     return NULL;  // identifier not found
 }
 
+void
+print_let_scope(Scope *scope)
+{   /* Print out the contents of the let scope.
+     */
+    assert(scope != NULL);  // sanity check
+    printf("[LET SCOPE]:\n");
+    print_symtable(scope->symtable);
+}
+
+void
+print_scope_stack(ScopeStack *stack)
+{   /*
+     */
+    assert(stack != NULL);  // sanity check
+    int i;
+    Scope *scope;
+    if (!in_global_scope(stack)) {
+        printf("SCOPE STACK CONTENTS:\n");
+        printf("=================================\n");
+        for (i = 0; i < stack->size; i++) {
+            scope = stack->scopes[i];
+            if (is_let_scope(scope)) {
+                print_let_scope(scope);
+            } else {
+                print_class(scope);
+            }
+        }
+    }
+    if (number_of_classes(stack) > 0) {
+        printf("\nCLASSES:\n");
+        printf("=================================\n");
+        print_all_classes(stack->global);
+    }
+}

@@ -17,7 +17,7 @@ int main()
     int flag;
     ScopeStack *stack;
     Symbol *sym;
-    Scope *tmp_scope, class;
+    Scope *tmp_scope, *class;
 
     // Test enter/exit scope for all scope types
     // ====================================================
@@ -114,6 +114,26 @@ int main()
 
     assert(method_exists_for_class(stack, "say_hello", "Person"));
     assert(!method_exists_for_class(stack, "no_method", "Person"));
+    scope_stack_destroy(stack);
+
+    // printing tests
+    // ====================================================
+    stack = scope_stack_create();
+    begin_class_declaration(stack, "Person");
+    declare_method(stack, "say_hello", INT, 1);
+    declare_attribute(stack, "name", STRING);
+    declare_method(stack, "say_goodbye", INT, 0);
+    end_class_declaration(stack);
+    class = lookup_class(stack, "Person");
+    print_class(class);
+
+    enter_let_scope(stack);
+    declare_attribute(stack, "x", INT);
+    declare_attribute(stack, "y", INT);
+    declare_attribute(stack, "test", STRING);
+    declare_attribute(stack, "nums", INT_ARR);
+    print_scope_stack(stack);
+    exit_scope(stack);
 
     scope_stack_destroy(stack);
     return 0;
