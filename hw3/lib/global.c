@@ -61,7 +61,9 @@ global_type_name(GlobalScope *global, int token)
      * Returns NULL if the token is not found.
      */
     assert(global != NULL);  // sanity check
-    return global->typetable[token % MAX_NUMBER_OF_TYPES];
+    char *name = global->typetable[token % MAX_NUMBER_OF_TYPES];
+    if (name != NULL) return strdup(name);
+    else return name;
 }
 
 void
