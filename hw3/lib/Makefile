@@ -20,3 +20,11 @@ run:
 	./scope
 	./global
 	./stack
+	./core
+
+clean:
+	rm symtable
+	rm scope
+	rm global
+	rm stack
+	rm core
