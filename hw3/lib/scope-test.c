@@ -21,7 +21,6 @@ main()
 
     sym = scope_lookup_attribute(scope, "nothing here");
     assert(sym == NULL);
-    free(sym);
 
     // positive test
     sym = scope_lookup_symbol(scope, "test", ATTRIBUTE);
@@ -34,9 +33,7 @@ main()
     assert(sym->type == 0);
     assert(sym->decl_type == ATTRIBUTE);
 
-    free(sym);
     scope_destroy(scope);
-
     scope = scope_create(LET_SCOPE, "Person");
 
     // negative test
@@ -53,6 +50,5 @@ main()
     assert(sym->decl_type == METHOD);
 
     scope_destroy(scope);
-    free(sym);
     return 0;
 }
