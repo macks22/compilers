@@ -6,6 +6,8 @@
 
 #include "scope_stack.h"
 
+#define INVALID_TYPE -32
+
 
 int in_class_scope(ScopeStack *stack);
 
@@ -46,6 +48,10 @@ int declare_method(ScopeStack *stack, char *name, int type, int argcount);
 int declare_attribute(ScopeStack *stack, char *name, int type);
 
 char * current_class_name(ScopeStack *stack);
+
+int attribute_type(ScopeStack *stack);
+
+Scope * containing_class(ScopeStack *stack);
 
 Scope * lookup_class(ScopeStack *stack, char *name);
 

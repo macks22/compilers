@@ -101,7 +101,6 @@ method_exists_for_class(ScopeStack *stack, char *method_name, char *class_name)
     if (class == NULL) {
         return NO_SUCH_CLASS;
     }
-
     return method_exists(class, method_name);
 }
 
@@ -271,6 +270,27 @@ current_class_name(ScopeStack *stack)
      * It returns the name of the scope.
      */
     return stack->local->name;
+}
+
+
+Scope *
+containing_class(ScopeStack *stack)
+{   /* If in a class or method scope, return the scope of the class.
+     * Otherwise return NULL.
+     */
+    assert(stack != NULL); // sanity check
+    int i;
+    Scope *scope;
+
+    // only ever one class on the scope at a time
+    i = 0;
+    for (i = stack->size-1; i >= 0; i--) {
+        scope = stack->scopes[i];
+        if (is_class_scope(scope)) {
+            return scope;
+        }
+    }
+    return NULL;
 }
 
 Scope *
