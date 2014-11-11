@@ -1,3 +1,33 @@
+# Build
+
+To build, simply run:
+
+    $ make
+
+in the main directory.
+
+The program can be run with any of:
+
+    $ ./uncool < <input-file>
+    $ ./uncool -v < <input-file>
+    $ ./uncool -vv < <input-file>
+
+It also supports 2 verbosity levels. The -v flag enables info logging, which is
+pretty cool to look at. The -vv flag enables debug level logging -- you probably
+don't want to see this stuff unless you're fixing bugs.
+
+If you want to run all of the tests, run the following:
+
+    $ make testvalid
+    $ make testinvalid
+
+The first runs all the valid .uc files through the parser. The only output that
+should come out of this is the number of errors (0). The second runs all invalid
+.uc files through the parser. The output of this will be more interesting. Note
+that the error-files-output.txt file contains output from the instructur. Some
+of this was wrong, and it also did not account for certain types of errors,
+which this parser will catch.
+
 # Design
 
 This project requires us to implement type checking for the UnCool langauge.
@@ -140,6 +170,11 @@ After further consideration:
 It may be useful just to build the stack and hash table from the ground up
 separately, since the arraylist would be used in very different ways --
 essentially requiring completely different methods.
+
+Things have gone south:
+-----------------------
+
+...
 
 ## Algorithms
 
