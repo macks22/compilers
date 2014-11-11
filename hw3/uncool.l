@@ -5,7 +5,6 @@
 #include "uncool.tab.h"
 
 int linect = 1;     // keep track of line number
-char *identifier;   // hold actual lexeme for identifiers
 
 %}
 
@@ -33,6 +32,7 @@ tel		    {return TEL_T;}
 then		{return THEN_T;}
 true		{return TRUE_T;}
 while		{return WHILE_T;}
+self        {return SELF_T;}
 \<		    {return LT;}
 \=		    {return EQ;}
 \<\=		{return LE;}
@@ -54,8 +54,8 @@ while		{return WHILE_T;}
 \]		    {return ']';}
 \;		    {return ';';}
 \:		    {return ':';}
-[a-z][A-Za-z0-9_]*	{identifier = strdup(yytext); return ID;}
-[A-Z][A-Za-z0-9_]*	{identifier = strdup(yytext); return TYPE;}
+[a-z][A-Za-z0-9_]*	{yylval.str = strdup(yytext); return ID;}
+[A-Z][A-Za-z0-9_]*	{yylval.str = strdup(yytext); return TYPE;}
 [0-9]*		        {return INT_CONST;}
 \"[^"]*\"	        {return STRING_CONST;}
 \-\-.*		;
