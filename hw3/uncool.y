@@ -623,6 +623,7 @@ main (int argc, char **argv) {
         print_type_map(stack);
     }
     scope_stack_destroy(stack);
+    return 0;
 }
 
 yyerror(char *s) {
