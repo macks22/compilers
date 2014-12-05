@@ -266,10 +266,14 @@ declare_attribute(ScopeStack *stack, char *name, int type)
 
 char *
 current_class_name(ScopeStack *stack)
-{   /* This assumes the local scope is not NULL and is a class scope.
-     * It returns the name of the scope.
+{   /* This assumes the local scope is not NULL and is a class or method scope.
+     * It returns the name of the class scope.
      */
-    return stack->local->name;
+    if (in_method_scope(stack)) {
+        return (stack->scopes[stack->size - 2])->name;
+    } else {
+        return stack->local->name;
+    }
 }
 
 

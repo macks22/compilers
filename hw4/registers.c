@@ -1,6 +1,7 @@
 // registers.c
 //
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -55,6 +56,8 @@ get_register(RegisterTracker *rt)
     int i;
     for (i = 1; i < NUM_REGISTERS; i++) {
         if (!rt->in_use[i]) {
+            //printf("#ALLOCATING REGISTER: %s\n", (char *)REG_NAMES[i]);
+            rt->in_use[i] = 1;
             rt->used++;
             return (char *)REG_NAMES[i];
         }
@@ -69,12 +72,14 @@ get_register(RegisterTracker *rt)
 void *
 free_register(RegisterTracker *rt, char *reg)
 {
+    //printf("#ATTEMPTING TO FREE REGISTER: %s\n", reg);
     assert(rt != NULL);
     int i;
     for (i = 1; i < NUM_REGISTERS; i++) {
         if (strcmp(REG_NAMES[i], reg) == 0) {
             rt->in_use[i] = 0;
             rt->used--;
+            //printf("#REGISTER FREED\n");
         }
     }
 }

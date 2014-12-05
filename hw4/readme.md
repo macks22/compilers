@@ -63,3 +63,104 @@ void * gheader();
 void * gfooter();
 void * gprint_int(int val);
 void * gprint_string(char * val);
+
+# Running Notes
+
+This section is used for a running implementation brainstorm.
+
+## Arithmetic Expressions
+
+There are only 3 arithmetic expressions: '+', '-', '*'. For each of these, we
+simply take the registers of the operands and put them into an appropriate
+assembly expression:
+
+'+': addl
+'-': subl
+'*': imull
+
+## Procedure Calls
+
+Procedure calls are invoked with the following convention:
+
+*   Arguments are pushed onto the stack from right to left
+*   Caller saves caller-save registers
+*   `call <func>` is used to jump to the function label
+*   Callee saves callee-save registers
+*   function executes
+*   Callee restores callee-save registers
+*   `ret` is used to return to wherever `call` left off
+*   Caller restores caller-save registers
+
+So before the call, args are pushed on like so:
+
+*   pushl <argn> 
+*   ...
+*   pushl <arg1>
+
+Which, with our statically allocated 128 stack bytes, corresponds to:
+
+*   movl <val>, 4n(%esp)
+*   ...
+*   movl <val>,  0(%esp)
+
+When the procedure actually has arguments, the callee can access them using
+offsets from the frame pointer, as follows:
+
+*    0(%ebp) = old %ebp
+*    4(%ebp) = return address
+*    8(%ebp) = 1st arg
+*   12(%ebp) = 2nd arg
+*   16(%ebp) = 3rd arg
+*   ...
+
+These references are essentially pulling things from the callers stack frame by
+using positive offsets from the bottom of its own frame (negative offsets move
+down into the callee frame). Note that `call` pushes the return address on the
+stack, and the first thing any function does is push the old frame pointer onto
+the stack, leaving it at position 0(%ebp).
+
+This portion of the assembly generation could all be managed with something like
+a virtual stack, which emulates the assembly stack, writing out the operations
+to be performed instead of actually performing them.
+
+Alternatively:
+Inside the function, these should be given these offsets as labels or all args
+should be immediately loaded into registers.
+
+*   `actual_list` is the only place where arguments are passed into method calls
+
+## Variables
+
+Variables are one of the more interesting pieces of the puzzle. Here we have two
+types of varaibles: global and local, with global being the simpler case.
+
+**Globals**
+
+For global variables, we need to define top-level labels to be used to hold the
+variable values. These do not need to be stored in the stack. A variable x would
+be defined as follows.
+
+	.data
+	.align 4
+	.type _Main_x, @object
+	.size _Main_x,4
+_Main_x:
+	.long 0
+
+Notes:
+
+*   The header portion is the same for all variables
+*   The value after the .long tag is the initial value of the variable
+*   The initial value for an integer is the number declared
+*   If no number is declared, the initial value for an integer is 0
+*   Strings are always defined and declared at the same time
+*   The initial value for strings should be the label of the string
+
+**Locals**
+
+Local variables are much more challenging than global variables, since they are
+stored in the stack dynamically.
+
+### Lookup
+
+### Declaration

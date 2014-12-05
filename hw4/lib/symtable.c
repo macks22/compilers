@@ -20,6 +20,11 @@ symbol_create_attribute(char *name, int type)
     symbol->type = type;
     symbol->decl_type = ATTRIBUTE;
     symbol->argcount = 0;
+
+    // ASSEMBLY
+    symbol->label = calloc(LABEL_SIZE, sizeof(char));
+    symbol->offset = NO_OFFSET;
+
     return symbol;
 }
 
@@ -42,6 +47,7 @@ void
 symbol_destroy(Symbol* symbol)
 {   /* Free up all memory for the symbol.
      */
+    free(symbol->label);
     free(symbol);
 }
 
