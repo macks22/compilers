@@ -281,8 +281,6 @@ expr        :    ID ASSIGN expr
                           attr = lookup_attribute(stack, $1);
                           gassign(attr, $3.reg);
                           $$.reg = $3.reg;
-                          // WARNING: DON'T USE RETURN VALUE OF ASSIGNMENTS!
-                          free_register(rt, $3.reg);
                       }
                     }
             |    ID '[' expr ']' ASSIGN expr
@@ -710,6 +708,7 @@ actual_list :    actual_list ',' expr
 
 expr_list   :    expr_list ';' expr
                     { $$.type = $3.type;
+                      free_register(rt, $1.reg);
                       $$.reg = $3.reg;
                     }
             |    expr
