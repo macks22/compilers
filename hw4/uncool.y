@@ -256,7 +256,7 @@ formal      :    ID ':' typename
                       if (flag != INVALID_TYPE) {
                           gassign_local_label($1);
                       }
-                      printf("#FORMAL ID: %s\n", $1);
+                      //printf("#FORMAL ID: %s\n", $1);
                     }
             |    ID ':' INT_T '[' ']'
                     {/* Attribute declaration for int array. */
@@ -265,7 +265,7 @@ formal      :    ID ':' typename
                       if (flag != INVALID_TYPE) {
                           gassign_local_label($1);
                       }
-                      printf("#FORMAL ID: %s\n", $1);
+                      //printf("#FORMAL ID: %s\n", $1);
                     }
             ;
 
@@ -281,6 +281,8 @@ expr        :    ID ASSIGN expr
                           attr = lookup_attribute(stack, $1);
                           gassign(attr, $3.reg);
                           $$.reg = $3.reg;
+                          // WARNING: DON'T USE RETURN VALUE OF ASSIGNMENTS!
+                          free_register(rt, $3.reg);
                       }
                     }
             |    ID '[' expr ']' ASSIGN expr
@@ -505,6 +507,7 @@ expr        :    ID ASSIGN expr
                       }
                       exit_scope(stack);
                       log_info("exiting let scope");
+                      $$.reg = $5.reg;
                     }
             |    NEW_T TYPE '(' ')'
                     {/* Create a new object of class TYPE.
@@ -707,23 +710,11 @@ actual_list :    actual_list ',' expr
 
 expr_list   :    expr_list ';' expr
                     { $$.type = $3.type;
-                      if (in_method_scope(stack)) {
-                          greturn($1.reg);
-                          free_register(rt, $3.reg);
-                          $$.reg = "%eax";
-                      } else {
-                          $$.reg = $3.reg;
-                      }
+                      $$.reg = $3.reg;
                     }
             |    expr
                     { $$.type = $1.type;
-                      if (in_method_scope(stack)) {
-                          greturn($1.reg);
-                          free_register(rt, $1.reg);
-                          $$.reg = "%eax";
-                      } else {
-                          $$.reg = $1.reg;
-                      }
+                      $$.reg = $1.reg;
                     }
             ;
 
