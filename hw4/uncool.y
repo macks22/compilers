@@ -13,7 +13,7 @@
 void error(int errtoken, ...);
 int wdeclare_attribute(char *name, int type);
 int wdeclare_method(char *name, int type, int argcount);
-void wend_method(int flag);
+void wend_method(int flag, char *ret_reg);
 
 char *containing_class_name();
 int check_array_index(int type);
@@ -27,7 +27,7 @@ int make_new_class(char *class_name, int argcount);
 
 char * lookup_attr_addr(Symbol *attr);
 void * gassign_local_label(char *attr_name);
-void * gpush_arg(char *reg);
+void * gpush_arg(char *reg, int offset);
 char * gcmp_safe(int cmp_op, char *first, char *second);
 
 extern int verbose;
@@ -36,10 +36,10 @@ extern int linect;
 int num_errors;
 
 // keep track of next free offset for ebp and esp.
+#define FIRST_FREE_EBP_OFFSET -28
 int ebp_offset;
 int esp_offset;
 int offset;
-#define FIRST_FREE_EBP_OFFSET -28
 int next_ebp_offset();
 int next_esp_offset();
 int reset_offsets();
@@ -89,11 +89,12 @@ RegisterTracker *rt;
 %type <type> OUT_STRING OUT_INT IN_INT
 %type <type> TRUE_T FALSE_T INT_CONST LET_T
 %type <type> ASSIGN
-%type <str> ID TYPE STRING_CONST IF_T THEN_T WHILE_T LOOP_T
+%type <str> ID TYPE STRING_CONST THEN_T WHILE_T LOOP_T
+%type <reg> IF_T
 
 %type <type> formal_list typename
 %type <str> formal
-%type <type> actual_list
+%type <reg> actual_list
 %type <reg> expr simple_constant expr_list
 
 %%
@@ -148,7 +149,7 @@ feature     :    ID '('
                     }
                  '{' expr_list '}'
                     {/* type check declaration and return type of expr_list */
-                      wend_method(dflag);
+                      wend_method(dflag, $10.reg);
                       check_method_types($1, $7, $10.type);
                     }
             |    ID '(' ')' ':' typename
@@ -157,7 +158,7 @@ feature     :    ID '('
                     }
                  '{' expr_list '}'
                     {/* type check declaration and return type of expr_list */
-                      wend_method(dflag);
+                      wend_method(dflag, $8.reg);
                       check_method_types($1, $5, $8.type);
                     }
             |    ID ':' typename
@@ -304,7 +305,9 @@ expr        :    ID ASSIGN expr
                       typetoken = get_attribute_type($1);
                       cname = type_name_from_token(typetoken);
                       $$.type = check_method_ref(cname, $3, 0);
-                      $$.reg = gcall($3, cname);
+                      reg = gcall($3, cname);
+                      $$.reg = get_register(rt);
+                      gmov(reg, $$.reg);
                     }
             |    ID '.' ID '(' actual_list ')'
                     {/* Method call using obj name prefix.
@@ -314,8 +317,10 @@ expr        :    ID ASSIGN expr
                       */
                       typetoken = get_attribute_type($1);
                       cname = type_name_from_token(typetoken);
-                      $$.type = check_method_ref(cname, $3, $5);
-                      $$.reg = gcall($3, cname);
+                      $$.type = check_method_ref(cname, $3, $5.type);
+                      reg = gcall($3, cname);
+                      $$.reg = get_register(rt);
+                      gmov(reg, $$.reg);
                     }
             |    ID '(' ')'
                     {/* Method call w/o obj name prefix.
@@ -330,7 +335,9 @@ expr        :    ID ASSIGN expr
                           $$.type = check_method_ref(cname, $1, 0);
                           // generate a call to the method
                           // no args, so no need to push them onto the stack
-                          $$.reg = gcall($1, cname);
+                          reg = gcall($1, cname);
+                          $$.reg = get_register(rt);
+                          gmov(reg, $$.reg);
                       }
                     }
             |    ID '(' actual_list ')'
@@ -345,11 +352,13 @@ expr        :    ID ASSIGN expr
                           error(SELF_REFERENCE_OUTSIDE_CLASS);
                           $$.type = INVALID_TYPE;
                       } else {
-                          log_info("%s called with %d argument(s)\n", $1, $3);
-                          $$.type = check_method_ref(cname, $1, $3);
+                          log_info("%s called with %d argument(s)\n", $1, $3.type);
+                          $$.type = check_method_ref(cname, $1, $3.type);
                           // generate a call to the method
                           // ASSUME actual_list pushes needed args
-                          $$.reg = gcall($1, cname);
+                          reg = gcall($1, cname);
+                          $$.reg = get_register(rt);
+                          gmov(reg, $$.reg);
                       }
                     }
             |    IN_INT '(' ')'
@@ -413,17 +422,17 @@ expr        :    ID ASSIGN expr
                     {/* The label and the jump should be generated here.
                       * The jump leads to the else body.
                       */
-                      $1 = get_label_if();
-                      reg = get_register(rt);
-                      gjump($1, "je");
+                      $1.strval = get_label_if();
+                      $1.reg = get_register(rt);
+                      gjump($1.strval, "je");
                     }
                 THEN_T expr
                     {/* Write out then clause, then jump to final label. */
                       $4 = get_label_if();
-                      gmov($5.reg, reg);
+                      gmov($5.reg, $1.reg);
                       free_register(rt, $5.reg);
                       gjump($4, "jmp");
-                      glabel($1);
+                      glabel($1.strval);
                     }
                 ELSE_T expr FI_T
                     {/* Conditional.
@@ -441,9 +450,9 @@ expr        :    ID ASSIGN expr
                       } else {
                           $$.type = $5.type;
                           // valid syntax, so generate code here
-                          gmov($8.reg, reg);
+                          gmov($8.reg, $1.reg);
                           free_register(rt, $8.reg);
-                          $$.reg = reg;
+                          $$.reg = $1.reg;
                           glabel($4);
                       }
                     }
@@ -511,7 +520,7 @@ expr        :    ID ASSIGN expr
                       * Compare arg count to actual_list size.
                       * Raise if different.
                       */
-                      $$.type = make_new_class($2, $4);
+                      $$.type = make_new_class($2, $4.type);
                     }
             |    NEW_T INT_T '[' expr ']'
                     {/* Create a new int array.
@@ -683,14 +692,16 @@ expr        :    ID ASSIGN expr
 
 actual_list :    actual_list ',' expr
                     {/* Method call argument list. */
-                      $$ = $1 + 1;
-                      gpush_arg($3.reg);
+                      $$.type = $1.type + 1;
+                      $$.val = $1.val + 4;
+                      gpush_arg($3.reg, $$.val);
                     }
             |    expr
                     {/* Method call argument list. */
-                      $$ = 1;
+                      $$.type = 1;
                       // this is the leftmost argument
-                      gpush_arg($1.reg);
+                      $$.val = 0;
+                      gpush_arg($1.reg, $$.val);
                     }
             ;
 
@@ -837,11 +848,13 @@ int wdeclare_method(char *name, int type, int argcount)
 }
 
 void
-wend_method(int dflag)
+wend_method(int dflag, char *ret_reg)
 {
     log_debug("flag value from method declaration: %d\n", dflag);
     if (!dflag) {
         log_info("end method decl: %s\n", stack->local->name);
+        greturn(ret_reg);
+        free_register(rt, ret_reg);
         gfunc_foot(stack->local->name, current_class_name(stack));
         end_method_declaration(stack);
         reset_offsets();
@@ -1224,9 +1237,9 @@ void * gassign_local_label(char *attr_name) {
 /**
  * Push an argument onto the stack before a call.
  */
-void * gpush_arg(char *reg)
+void * gpush_arg(char *reg, int offset)
 {
-    gcaller_pass(reg, greg_offset("esp", next_esp_offset()));
+    gcaller_pass(reg, greg_offset("esp", offset));
 }
 
 /**

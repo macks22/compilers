@@ -298,7 +298,7 @@ greturn_int(int val)
  */
 char * greturn(char *reg)
 {
-    printf("\tmovl\t%s,%%eax\n", reg);
+    gmov(reg, "%eax");
     return "%eax";
 }
 
@@ -427,7 +427,9 @@ char * gstack_ref(int offset)
  */
 void * gmov(char *src, char *dest)
 {
-    printf("\tmovl\t%s,%s\n", src, dest);
+    if (strcmp(src, dest) != 0) {  // avoid moves to/from same register
+        printf("\tmovl\t%s,%s\n", src, dest);
+    }
 }
 
 /**
@@ -474,7 +476,7 @@ greg_offset(char *reg, int offset)
  */
 void * gcaller_pass(char *reg, char *esp_loc)
 {
-    printf("\tmovl\t%s,%s\n", reg, esp_loc);
+    gmov(reg, esp_loc);
 }
 
 /**
@@ -510,7 +512,9 @@ char * gcmp(int comparator, char *first, char *second)
  */
 void * gjump(char *label, char *jump_op)
 {
-    printf("\tcmpl\t$0,%%eax\n");
+    if (strcmp(jump_op, "jmp") != 0) {
+        printf("\tcmpl\t$0,%%eax\n");
+    }
     printf("\t%s\t%s\n", jump_op, label);
 }
 
