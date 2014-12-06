@@ -398,3 +398,22 @@ void * gcall(char *func_name, char *class_name)
     printf("\tcall\t%s\n", fname);
     gcaller_restore();
 }
+
+/**
+ * Gen string label which represents an offset from a register.
+ */
+char *
+greg_offset(char *reg, int offset)
+{
+    char *label = calloc(128, sizeof(char));
+    sprintf(label, "%d(%%%s)", offset, reg);
+    return label;
+}
+
+/**
+ * Put an argument onto the stack at an esp offset before making a call.
+ */
+void * gcaller_pass(char *reg, char *esp_loc)
+{
+    printf("\tmovl\t%s,%s\n", reg, esp_loc);
+}

@@ -113,6 +113,10 @@ offsets from the frame pointer, as follows:
 *   16(%ebp) = 3rd arg
 *   ...
 
+So when placing variables onto the stack at %esp offsets, we can simply store
+the eventual offset locations from %ebp. To calculate the eventual offsets,
+simply add 4 to the %esp offset.
+
 These references are essentially pulling things from the callers stack frame by
 using positive offsets from the bottom of its own frame (negative offsets move
 down into the callee frame). Note that `call` pushes the return address on the
@@ -128,6 +132,9 @@ Inside the function, these should be given these offsets as labels or all args
 should be immediately loaded into registers.
 
 *   `actual_list` is the only place where arguments are passed into method calls
+*   `formal_list` is used for method and let declaration. Therefore id
+    declarations in the RHS of `formal` are the only ones which will use esp
+    offsets
 
 ## Variables
 

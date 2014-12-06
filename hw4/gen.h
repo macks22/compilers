@@ -153,3 +153,13 @@ void * gmov(char *src, char *dest);
  * be used for the assignment.
  */
 void * gassign(Symbol *attr, char *reg);
+
+/**
+ * Gen string label which represents an offset from a register.
+ */
+char * greg_offset(char *reg, int offset);
+
+/**
+ * Put an argument onto the stack at an esp offset before making a call.
+ */
+void * gcaller_pass(char *reg, char *esp_loc);
