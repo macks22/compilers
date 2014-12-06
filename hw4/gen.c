@@ -11,6 +11,7 @@
 
 int curlabel;
 int curlabel_if;
+int curlabel_while;
 
 /**
  * Get a new unique label. These labels take the from L<x>, where
@@ -31,6 +32,16 @@ char * get_label_if()
 {
     char *label = calloc(7, sizeof(char));
     sprintf(label, "IF%d", curlabel_if++);
+    return label;
+}
+
+/**
+ * Get next WHILE loop label.
+ */
+char * get_label_while()
+{
+    char *label = calloc(7, sizeof(char));
+    sprintf(label, "WH%d", curlabel_while++);
     return label;
 }
 
@@ -135,6 +146,7 @@ void * gheader()
 {
     curlabel = 0;
     curlabel_if = 0;
+    curlabel_while = 0;
     printf("#HEADER:\n");
     printf("\t.section\t.rodata.str1.1,\"aMS\",@progbits,1\n");
     gio_labels();

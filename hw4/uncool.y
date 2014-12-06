@@ -28,6 +28,7 @@ int make_new_class(char *class_name, int argcount);
 char * lookup_attr_addr(Symbol *attr);
 void * gassign_local_label(char *attr_name);
 void * gpush_arg(char *reg);
+char * gcmp_safe(int cmp_op, char *first, char *second);
 
 extern int verbose;
 extern int linect;
@@ -43,7 +44,7 @@ int next_ebp_offset();
 int next_esp_offset();
 int reset_offsets();
 
-char *cname, *label1, *label2, *reg;
+char *cname, *reg;
 int cflag, dflag, flag, typetoken;
 ScopeStack *stack;
 Symbol *method, *attr;
@@ -83,12 +84,12 @@ RegisterTracker *rt;
 }
 
 %type <type> CLASS_T INT_T BOOL_T STRING_T IN_T TEL_T INT_ARR_T VOID_T
-%type <type> THEN_T ELSE_T FI_T LOOP_T POOL_T
+%type <type> ELSE_T FI_T POOL_T
 %type <type> NEW_T ISVOID_T SELF_T LE LT GT GE NE EQ NOT_T
 %type <type> OUT_STRING OUT_INT IN_INT
-%type <type> TRUE_T FALSE_T INT_CONST LET_T IF_T WHILE_T
+%type <type> TRUE_T FALSE_T INT_CONST LET_T
 %type <type> ASSIGN
-%type <str> ID TYPE STRING_CONST
+%type <str> ID TYPE STRING_CONST IF_T THEN_T WHILE_T LOOP_T
 
 %type <type> formal_list typename
 %type <str> formal
@@ -412,17 +413,17 @@ expr        :    ID ASSIGN expr
                     {/* The label and the jump should be generated here.
                       * The jump leads to the else body.
                       */
+                      $1 = get_label_if();
                       reg = get_register(rt);
-                      label1 = get_label_if();
-                      label2 = get_label_if();
-                      gjump(label1, "je");
+                      gjump($1, "je");
                     }
                 THEN_T expr
                     {/* Write out then clause, then jump to final label. */
+                      $4 = get_label_if();
                       gmov($5.reg, reg);
                       free_register(rt, $5.reg);
-                      gjump(label2, "jmp");
-                      glabel(label1);
+                      gjump($4, "jmp");
+                      glabel($1);
                     }
                 ELSE_T expr FI_T
                     {/* Conditional.
@@ -443,20 +444,34 @@ expr        :    ID ASSIGN expr
                           gmov($8.reg, reg);
                           free_register(rt, $8.reg);
                           $$.reg = reg;
-                          glabel(label2);
+                          glabel($4);
                       }
                     }
-            |    WHILE_T expr
+            |    WHILE_T
+                    {/* Generate top level while loop label. */
+                      $1 = get_label_while();
+                      glabel($1);  // the while rerun label
+                    }
+                 expr LOOP_T
                     {/* Loop.
-                      * First expr must be bool.
-                      * Return type is always Int.
+                      * First expr must be bool. Return type is always Int.
                       */
-                      if ($2.type != BOOL_T) {
+                      if ($3.type != BOOL_T) {
                           error(PREDICATE_NOT_BOOL, "while");
+                      } else {
+                          $4 = get_label_while();
+                          gjump($4, "je");
+                          free_register(rt, $3.reg);
                       }
                     }
-                 LOOP_T expr POOL_T
-                    { $$.type = INT_T; }
+                 expr POOL_T
+                    {/* loop body */
+                      $$.type = INT_T;
+                      gjump($1, "jmp");
+                      glabel($4);
+                      free_register(rt, $6.reg);
+                      $$.reg = greturn_int(0);
+                    }
             |    '{' expr_list '}'
                     {/* Series of expr statements.
                       * Return type is return type of last expr.
@@ -578,7 +593,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPE_MISMATCH, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(NE, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(NE, $1.reg, $3.reg);
                     }
             |    expr GT expr
                     {/* GREATER THAN.
@@ -588,7 +603,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(GT, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(GT, $1.reg, $3.reg);
                     }
             |    expr GE expr
                     {/* GREATER THAN OR EQUAL TO.
@@ -598,7 +613,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(GE, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(GE, $1.reg, $3.reg);
                     }
             |    expr LT expr
                     {/* LESS THAN.
@@ -608,7 +623,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(LT, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(LT, $1.reg, $3.reg);
                     }
             |    expr LE expr
                     {/* LESS THAN OR EQUAL TO.
@@ -618,7 +633,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(LE, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(LE, $1.reg, $3.reg);
                     }
             |    expr EQ expr
                     {/* EQUAL TO.
@@ -629,7 +644,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPE_MISMATCH, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
-                      $$.reg = gcmp(EQ, $1.reg, $3.reg);
+                      $$.reg = gcmp_safe(EQ, $1.reg, $3.reg);
                     }
             |    '(' expr ')'
                     {/* Used to indicate precedence.
@@ -1159,10 +1174,13 @@ lookup_attr_addr(Symbol *attr)
     assert(attr != NULL);
     char *reg = get_register(rt);
     if (is_global(attr)) {
-        //printf("#LOOKUP GLOBAL ATTRIBUTE\n");
+        //printf("#LOOKUP GLOBAL ATTRIBUTE: %s\n", attr->name);
         gload_var_ref(attr->label, reg);
+        //printf("#SUCCESS\n");
     } else {  // local
+        //printf("#LOOKUP LOCAL ATTRIBUTE: %s\n", attr->name);
         gload_stack_ref(attr->offset, reg);
+        //printf("#SUCCESS\n");
     }
     return reg;
 }
@@ -1209,4 +1227,14 @@ void * gassign_local_label(char *attr_name) {
 void * gpush_arg(char *reg)
 {
     gcaller_pass(reg, greg_offset("esp", next_esp_offset()));
+}
+
+/**
+ * Generate comparison and free registers involved.
+ */
+char * gcmp_safe(int cmp_op, char *first, char *second)
+{
+    free_register(rt, first);
+    free_register(rt, second);
+    return gcmp(cmp_op, first, second);
 }

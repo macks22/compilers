@@ -191,5 +191,22 @@ z <- if (x < y) then y else x fi
     # else x
     movl %edx, _Main_z  # z <- x
 .L3:
+    ...
 
 ### WHILE
+
+i in %edx, y in %ecx
+while i <= y loop ...body... pool
+
+.L0
+    cmpl    %ecx, %edx  # execute %edx - %ecx : set CCs (i - y)
+    setle   %al
+    movzbl  %al, %eax
+    cmpl    $0, %eax
+    je      .L1
+    ...body...
+    jmp     .L0
+.L1
+    ...
+
+Need 2 labels, 2 jumps, and one comparison.

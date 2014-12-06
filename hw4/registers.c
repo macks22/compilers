@@ -78,9 +78,13 @@ free_register(RegisterTracker *rt, char *reg)
     int i;
     for (i = 1; i < NUM_REGISTERS; i++) {
         if (strcmp(REG_NAMES[i], reg) == 0) {
-            rt->in_use[i] = 0;
-            rt->used--;
-            //printf("#REGISTER FREED (%d) \n", rt->used);
+            if (rt->in_use[i] == 1) {
+                rt->in_use[i] = 0;
+                rt->used--;
+                //printf("#REGISTER FREED (%d) \n", rt->used);
+            } else {
+                //printf("#REGISTER WAS NOT IN USE (%d)\n", rt->used);
+            }
         }
     }
 }

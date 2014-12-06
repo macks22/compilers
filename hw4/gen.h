@@ -6,6 +6,7 @@
 
 extern int curlabel;  // track the most recently assigned label
 extern int curlabel_if;
+extern int curlabel_while;
 
 /**
  * Get a new unique label. These labels take the from L<x>, where
@@ -18,6 +19,11 @@ char * get_label();
  * Get next IF statement label.
  */
 char * get_label_if();
+
+/**
+ * Get next WHILE loop label.
+ */
+char * get_label_while();
 
 /**
  * Generate code for the file header.
