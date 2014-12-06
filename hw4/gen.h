@@ -5,6 +5,7 @@
 #include "lib/symtable.h"
 
 extern int curlabel;  // track the most recently assigned label
+extern int curlabel_if;
 
 /**
  * Get a new unique label. These labels take the from L<x>, where
@@ -12,6 +13,11 @@ extern int curlabel;  // track the most recently assigned label
  * incremented at each call.
  */
 char * get_label();
+
+/**
+ * Get next IF statement label.
+ */
+char * get_label_if();
 
 /**
  * Generate code for the file header.
@@ -104,6 +110,11 @@ void * gload_stack_ref(int offset, char *reg);
 char * greturn_int(int val);
 
 /**
+ * Gen code to return the value in a particular register from a function.
+ */
+char * greturn(char *reg);
+
+/**
  * Gen code to get input from user.
  */
 void * ginput();
@@ -136,6 +147,17 @@ char * gsub(char *src, char *dest);
 char * gimul(char *src, char *dest);
 
 /**
+ * Gen code to get logical not of value in register.
+ * The result is stored back in the same register.
+ */
+char * gnot(char *dest);
+
+/**
+ * Gen code to get negation of an integer value stored in the dest register.
+ */
+char * gneg(char *dest);
+
+/**
  * Get a stack reference at the given offset.
  * This will be an offset down from the frame pointer %ebp.
  */
@@ -145,7 +167,6 @@ char * gstack_ref(int offset);
  * Gen code for basic move op.
  */
 void * gmov(char *src, char *dest);
-
 
 /**
  * Gen code to update the attribute. If global, the assignment will
@@ -163,3 +184,26 @@ char * greg_offset(char *reg, int offset);
  * Put an argument onto the stack at an esp offset before making a call.
  */
 void * gcaller_pass(char *reg, char *esp_loc);
+
+/**
+ * Gen code to call the class method.
+ */
+char * gcall(char *func_name, char *class_name);
+
+/**
+ * Gen code to compare two registers.
+ * The result will be stored in %eax and %eax will be returned,
+ * so it can be used for conditional jump calls.
+ * For x < y, x will be first and y will be second.
+ */
+char * gcmp(int comparator, char *first, char *second);
+
+/**
+ * Gen code to jump to label using given jump op.
+ */
+void * gjump(char *label, char *jump_op);
+
+/**
+ * Generate the given label at the current position.
+ */
+void * glabel(char *label);

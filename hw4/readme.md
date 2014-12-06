@@ -171,3 +171,25 @@ stored in the stack dynamically.
 ### Lookup
 
 ### Declaration
+
+## Control Flow
+
+### IF
+
+x in %edx, y in %ecx
+z <- if (x < y) then y else x fi
+
+    cmpl    %ecx, %edx  # execute %edx - %ecx : set CCs
+    setl    %al         # set if less; if SB is negative
+    movzbl  %al, %eax   # move zero extended (1 if x < y, else 0)
+    cmpl    $0, %eax    # put into EAX: 0 if true, else something non-zero
+    je      .L2         # if !(x < y), jump to .L2
+    # then y
+    movl %ecx, _Main_z  # z <- y
+    jmp .L3            # skip the else clause
+.L2:
+    # else x
+    movl %edx, _Main_z  # z <- x
+.L3:
+
+### WHILE

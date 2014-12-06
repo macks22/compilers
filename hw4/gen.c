@@ -7,8 +7,10 @@
 #include <string.h>
 #include "gen.h"
 #include "registers.h"
+#include "uncool.tab.h"
 
 int curlabel;
+int curlabel_if;
 
 /**
  * Get a new unique label. These labels take the from L<x>, where
@@ -20,6 +22,16 @@ char * get_label()
     char * buf = calloc(7, sizeof(char));  // labels up to 999 allowed
     sprintf(buf, ".LC%d", curlabel++);
     return buf;
+}
+
+/**
+ * Get next IF statement label.
+ */
+char * get_label_if()
+{
+    char *label = calloc(7, sizeof(char));
+    sprintf(label, "IF%d", curlabel_if++);
+    return label;
 }
 
 char *
@@ -61,10 +73,19 @@ void * gfunc_foot(char *func_name, char *class_name)
 {
     char *fname = gfunc_name(func_name, class_name);
     gcallee_restore();
-	printf("\taddl $128,%%esp\n"
-	       "\tmovl\t%%ebp,%%esp\n"
-	       "\tpopl\t%%ebp\n"
-	       "\tret\n");
+	printf("\taddl\t$128,%%esp\n");
+
+    if (strcmp(fname, "main") == 0) {
+        printf("\tpopl\t%%ecx\n"
+               "\tpopl\t%%ebp\n"
+               "\tleal\t-4(%%ecx),%%esp\n");
+
+    } else {
+	    printf("\tmovl\t%%ebp,%%esp\n"
+               "\tpopl\t%%ebp\n");
+    }
+
+    printf("\tret\n");
 	printf("\t.size %s, .-%s\n", fname, fname);
     free(fname);
 }
@@ -113,6 +134,7 @@ void * gio_labels()
 void * gheader()
 {
     curlabel = 0;
+    curlabel_if = 0;
     printf("#HEADER:\n");
     printf("\t.section\t.rodata.str1.1,\"aMS\",@progbits,1\n");
     gio_labels();
@@ -124,13 +146,7 @@ void * gheader()
  */
 void * gfooter()
 {
-    printf("\n#FOOTER:\n");
-    printf("\taddl\t$128,%%esp\n"
-           "\tpopl\t%%ecx\n"
-           "\tpopl\t%%ebp\n"
-           "\tleal\t-4(%%ecx),%%esp\n"
-           "\tret\n"
-           "\t.size\tmain, .-main\n"
+    printf("\n#FOOTER:\n"
            "\t.section\t.note.GNU-stack,\"\",@progbits\n");
 }
 
@@ -266,6 +282,15 @@ greturn_int(int val)
 }
 
 /**
+ * Gen code to return the value in a particular register from a function.
+ */
+char * greturn(char *reg)
+{
+    printf("\tmovl\t%s,%%eax\n", reg);
+    return "%eax";
+}
+
+/**
  * Gen code to get input from user.
  * The register passed in ends up with the input value.
  */
@@ -354,6 +379,27 @@ gimul(char *src, char *dest)
 }
 
 /**
+ * Gen code to get logical not of value in register.
+ * The result is stored back in the same register.
+ */
+char *
+gnot(char *dest)
+{
+    printf("\tnotl\t%s\n", dest);
+    return dest;
+}
+
+/**
+ * Gen code to get negation of an integer value stored in the dest register.
+ */
+char *
+gneg(char *dest)
+{
+    printf("\tnegl\t%s\n", dest);
+    return dest;
+}
+
+/**
  * Get a stack reference at the given offset.
  * This will be an offset down from the frame pointer %ebp.
  */
@@ -391,12 +437,13 @@ gassign(Symbol *attr, char *reg)
 /**
  * Gen code to call the class method.
  */
-void * gcall(char *func_name, char *class_name)
+char * gcall(char *func_name, char *class_name)
 {
     char *fname = gfunc_name(func_name, class_name);
     gcaller_save();
     printf("\tcall\t%s\n", fname);
     gcaller_restore();
+    return "%eax";
 }
 
 /**
@@ -416,4 +463,49 @@ greg_offset(char *reg, int offset)
 void * gcaller_pass(char *reg, char *esp_loc)
 {
     printf("\tmovl\t%s,%s\n", reg, esp_loc);
+}
+
+/**
+ * Take the comparator token and return the appropriate set<x> op.
+ */
+char *
+multiplex_cmp(int comparator)
+{
+    if (comparator == LT) return "setl";
+    else if (comparator == LE) return "setle";
+    else if (comparator == EQ) return "sete";
+    else if (comparator == GT) return "setg";
+    else if (comparator == GE) return "setge";
+    else return "setne";
+}
+
+/**
+ * Gen code to compare two registers.
+ * The result will be stored in %eax and %eax will be returned,
+ * so it can be used for conditional jump calls.
+ * For x < y, x will be first and y will be second.
+ */
+char * gcmp(int comparator, char *first, char *second)
+{
+    printf("\tcmpl\t%s,%s\n", second, first);
+    printf("\t%s\t%%al\n", multiplex_cmp(comparator));
+    printf("\tmovzbl\t%%al,%%eax\n");
+    return "%eax";
+}
+
+/**
+ * Gen code to jump to label using given jump op.
+ */
+void * gjump(char *label, char *jump_op)
+{
+    printf("\tcmpl\t$0,%%eax\n");
+    printf("\t%s\t%s\n", jump_op, label);
+}
+
+/**
+ * Generate the given label at the current position.
+ */
+void * glabel(char *label)
+{
+    printf("%s:\n", label);
 }

@@ -56,9 +56,10 @@ get_register(RegisterTracker *rt)
     int i;
     for (i = 1; i < NUM_REGISTERS; i++) {
         if (!rt->in_use[i]) {
-            //printf("#ALLOCATING REGISTER: %s\n", (char *)REG_NAMES[i]);
             rt->in_use[i] = 1;
             rt->used++;
+            //printf("#ALLOCATING REGISTER: %s (%d)\n", (char *)REG_NAMES[i],
+            //       rt->used);
             return (char *)REG_NAMES[i];
         }
     }
@@ -79,7 +80,7 @@ free_register(RegisterTracker *rt, char *reg)
         if (strcmp(REG_NAMES[i], reg) == 0) {
             rt->in_use[i] = 0;
             rt->used--;
-            //printf("#REGISTER FREED\n");
+            //printf("#REGISTER FREED (%d) \n", rt->used);
         }
     }
 }

@@ -43,7 +43,7 @@ int next_ebp_offset();
 int next_esp_offset();
 int reset_offsets();
 
-char *cname;
+char *cname, *label1, *label2, *reg;
 int cflag, dflag, flag, typetoken;
 ScopeStack *stack;
 Symbol *method, *attr;
@@ -90,10 +90,10 @@ RegisterTracker *rt;
 %type <type> ASSIGN
 %type <str> ID TYPE STRING_CONST
 
-%type <type> expr_list formal_list typename
+%type <type> formal_list typename
 %type <str> formal
 %type <type> actual_list
-%type <reg> expr simple_constant
+%type <reg> expr simple_constant expr_list
 
 %%
 
@@ -148,7 +148,7 @@ feature     :    ID '('
                  '{' expr_list '}'
                     {/* type check declaration and return type of expr_list */
                       wend_method(dflag);
-                      check_method_types($1, $7, $10);
+                      check_method_types($1, $7, $10.type);
                     }
             |    ID '(' ')' ':' typename
                     {/* Method declaration with 0 params. */
@@ -157,7 +157,7 @@ feature     :    ID '('
                  '{' expr_list '}'
                     {/* type check declaration and return type of expr_list */
                       wend_method(dflag);
-                      check_method_types($1, $5, $8);
+                      check_method_types($1, $5, $8.type);
                     }
             |    ID ':' typename
                     {/* Attribute declaration, no assignment. */
@@ -303,6 +303,7 @@ expr        :    ID ASSIGN expr
                       typetoken = get_attribute_type($1);
                       cname = type_name_from_token(typetoken);
                       $$.type = check_method_ref(cname, $3, 0);
+                      $$.reg = gcall($3, cname);
                     }
             |    ID '.' ID '(' actual_list ')'
                     {/* Method call using obj name prefix.
@@ -313,6 +314,7 @@ expr        :    ID ASSIGN expr
                       typetoken = get_attribute_type($1);
                       cname = type_name_from_token(typetoken);
                       $$.type = check_method_ref(cname, $3, $5);
+                      $$.reg = gcall($3, cname);
                     }
             |    ID '(' ')'
                     {/* Method call w/o obj name prefix.
@@ -327,7 +329,7 @@ expr        :    ID ASSIGN expr
                           $$.type = check_method_ref(cname, $1, 0);
                           // generate a call to the method
                           // no args, so no need to push them onto the stack
-                          gcall($1, cname);
+                          $$.reg = gcall($1, cname);
                       }
                     }
             |    ID '(' actual_list ')'
@@ -346,7 +348,7 @@ expr        :    ID ASSIGN expr
                           $$.type = check_method_ref(cname, $1, $3);
                           // generate a call to the method
                           // ASSUME actual_list pushes needed args
-                          gcall($1, cname);
+                          $$.reg = gcall($1, cname);
                       }
                     }
             |    IN_INT '(' ')'
@@ -406,7 +408,23 @@ expr        :    ID ASSIGN expr
                       }
                       $$.type = INT_T;
                     }
-            |    IF_T expr THEN_T expr ELSE_T expr FI_T
+            |    IF_T expr
+                    {/* The label and the jump should be generated here.
+                      * The jump leads to the else body.
+                      */
+                      reg = get_register(rt);
+                      label1 = get_label_if();
+                      label2 = get_label_if();
+                      gjump(label1, "je");
+                    }
+                THEN_T expr
+                    {/* Write out then clause, then jump to final label. */
+                      gmov($5.reg, reg);
+                      free_register(rt, $5.reg);
+                      gjump(label2, "jmp");
+                      glabel(label1);
+                    }
+                ELSE_T expr FI_T
                     {/* Conditional.
                       * First expr must be bool.
                       * Second and Third expr types must match, and this
@@ -415,12 +433,17 @@ expr        :    ID ASSIGN expr
                       if ($2.type != BOOL_T) {
                           error(PREDICATE_NOT_BOOL, "if");
                           $$.type = INVALID_TYPE;
-                      } else if ($4.type != $6.type) {
+                      } else if ($5.type != $8.type) {
                           error(CONDITIONAL_BRANCH_TYPES_DIFFER,
-                                $4.type, $6.type);
-                          $$.type = $4.type;
+                                $5.type, $8.type);
+                          $$.type = $5.type;
                       } else {
-                          $$.type = $4.type;
+                          $$.type = $5.type;
+                          // valid syntax, so generate code here
+                          gmov($8.reg, reg);
+                          free_register(rt, $8.reg);
+                          $$.reg = reg;
+                          glabel(label2);
                       }
                     }
             |    WHILE_T expr
@@ -438,7 +461,8 @@ expr        :    ID ASSIGN expr
                     {/* Series of expr statements.
                       * Return type is return type of last expr.
                       */
-                      $$.type = $2;
+                      $$.type = $2.type;
+                      $$.reg = $2.reg;
                     }
             |    LET_T
                     {/* Let statement.
@@ -526,14 +550,14 @@ expr        :    ID ASSIGN expr
                       free_register(rt, $3.reg);  // free src register
                     }
             |    '~' expr  %prec UC
-                    {/* UNIMINUS.
-                      * expr must be int.
-                      * Returns an int.
+                    {/* UNIMINUS. `expr` must be int.  Returns an int.
+                      * This is negation.
                       */
                       if ($2.type != INT_T) {
                           error(UNIMINUS_EXPR_NOT_INT, $2.type);
                       }
                       $$.type = INT_T;
+                      $$.reg = gneg($2.reg);
                     }
             |    NOT_T expr  %prec UM
                     {/* NOT.
@@ -543,6 +567,7 @@ expr        :    ID ASSIGN expr
                           error(NOT_EXPR_NOT_BOOL, $2.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gnot($2.reg);
                     }
             |    expr NE expr
                     {/* NOT EQUAL.
@@ -553,6 +578,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPE_MISMATCH, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(NE, $1.reg, $3.reg);
                     }
             |    expr GT expr
                     {/* GREATER THAN.
@@ -562,6 +588,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(GT, $1.reg, $3.reg);
                     }
             |    expr GE expr
                     {/* GREATER THAN OR EQUAL TO.
@@ -571,6 +598,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(GE, $1.reg, $3.reg);
                     }
             |    expr LT expr
                     {/* LESS THAN.
@@ -580,6 +608,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(LT, $1.reg, $3.reg);
                     }
             |    expr LE expr
                     {/* LESS THAN OR EQUAL TO.
@@ -589,6 +618,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPES_NOT_INT, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(LE, $1.reg, $3.reg);
                     }
             |    expr EQ expr
                     {/* EQUAL TO.
@@ -599,6 +629,7 @@ expr        :    ID ASSIGN expr
                           error(COMPARISON_OP_TYPE_MISMATCH, $1.type, $3.type);
                       }
                       $$.type = BOOL_T;
+                      $$.reg = gcmp(EQ, $1.reg, $3.reg);
                     }
             |    '(' expr ')'
                     {/* Used to indicate precedence.
@@ -649,9 +680,25 @@ actual_list :    actual_list ',' expr
             ;
 
 expr_list   :    expr_list ';' expr
-                    { $$ = $3.type; }
+                    { $$.type = $3.type;
+                      if (in_method_scope(stack)) {
+                          greturn($1.reg);
+                          free_register(rt, $3.reg);
+                          $$.reg = "%eax";
+                      } else {
+                          $$.reg = $3.reg;
+                      }
+                    }
             |    expr
-                    { $$ = $1.type; }
+                    { $$.type = $1.type;
+                      if (in_method_scope(stack)) {
+                          greturn($1.reg);
+                          free_register(rt, $1.reg);
+                          $$.reg = "%eax";
+                      } else {
+                          $$.reg = $1.reg;
+                      }
+                    }
             ;
 
 %%
