@@ -206,7 +206,7 @@ feature     :    ID '('
                       flag = wdeclare_attribute($1, INT_ARR_T);
                       if (!flag) {
                           attr = lookup_attribute(stack, $1);
-                          attr->label = gdecl_globl_int($1, 0);
+                          attr->label = gdecl_globl_int($1, -1);
                       }
                     }
             ;
