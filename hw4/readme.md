@@ -210,3 +210,49 @@ while i <= y loop ...body... pool
     ...
 
 Need 2 labels, 2 jumps, and one comparison.
+
+## Arrays
+
+For arrays, we will use malloc in all cases.
+
+*   malloc takes a single argument: the # of bytes to allocate
+*   For integer arrays : (4 * array size)
+*   Malloc returns a pointer to the allocated block in %eax
+*   This address should be stored in the array variable.
+*   Subsequent access and assignment does the following:
+    (1) load variable into register
+    (2) take (index * 4) and use that as an offset i : i(%reg)
+*   We will need:
+    (1) array define
+    (2) array lookup
+    (3) array assign
+
+Assume x is an array and x is in %edx.
+
+## Define
+
+x : Int [];
+    first declare x as normal, so the pointer to x can be looked up
+    as a local or global attribute. The base address of the allocation
+    will be stored here. The example below is for global.
+
+    <caller-save>
+    movl    <size>, (%esp)
+    call    malloc
+    <caller-restore>
+    movl    %eax, _Main_x
+
+## Lookup
+
+x [3];
+
+    movl    _Main_x, %edx
+    movl    12(%edx), %edx
+
+## Assign
+
+x [2] <- 3;
+
+    movl    $3, %ebx
+    movl    _Main_x, %edx
+    movl    %ebx, 8(%edx)

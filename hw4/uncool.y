@@ -25,7 +25,7 @@ char *type_name_from_token(int token);
 int check_method_ref(char *class_name, char *method_name, int argcount);
 int make_new_class(char *class_name, int argcount);
 
-char * lookup_attr_addr(Symbol *attr);
+char * gload_attr_addr(Symbol *attr);
 void * gassign_local_label(char *attr_name);
 void * gpush_arg(char *reg, int offset);
 char * gcmp_safe(int cmp_op, char *first, char *second);
@@ -204,6 +204,10 @@ feature     :    ID '('
             |    ID ':' INT_T '[' ']'
                     {/* Attribute declaration for int array. */
                       flag = wdeclare_attribute($1, INT_ARR_T);
+                      if (!flag) {
+                          attr = lookup_attribute(stack, $1);
+                          attr->label = gdecl_globl_int($1, 0);
+                      }
                     }
             ;
 
@@ -256,7 +260,7 @@ formal      :    ID ':' typename
                       if (flag != INVALID_TYPE) {
                           gassign_local_label($1);
                       }
-                      //printf("#FORMAL ID: %s\n", $1);
+                      printf("#FORMAL ID: %s\n", $1);
                     }
             |    ID ':' INT_T '[' ']'
                     {/* Attribute declaration for int array. */
@@ -265,7 +269,7 @@ formal      :    ID ':' typename
                       if (flag != INVALID_TYPE) {
                           gassign_local_label($1);
                       }
-                      //printf("#FORMAL ID: %s\n", $1);
+                      printf("#FORMAL ID: %s\n", $1);
                     }
             ;
 
@@ -295,6 +299,14 @@ expr        :    ID ASSIGN expr
                       check_array_index($3.type);
                       type_check_int_arr_assign($1, $6.type);
                       $$.type = $6.type;
+                      // array assignment
+                      attr = lookup_attribute(stack, $1);
+                      $$.reg = gload_attr_addr(attr);  // now holds arr base
+                      // expr is size register
+                      garr_assign($$.reg, $3.reg, $6.reg);
+                      free_register(rt, $$.reg);
+                      free_register(rt, $3.reg);
+                      $$.reg = $6.reg;
                     }
             |    ID '.' ID '(' ')'
                     {/* Method call using obj name prefix.
@@ -400,7 +412,7 @@ expr        :    ID ASSIGN expr
                       $$.type = flag;  // whether valid or invalid, this works
                       if (flag != INVALID_TYPE) {
                           attr = lookup_attribute(stack, $1);
-                          $$.reg = lookup_attr_addr(attr);
+                          $$.reg = gload_attr_addr(attr);
                       }
                     }
             |    ID '[' expr ']'
@@ -415,6 +427,10 @@ expr        :    ID ASSIGN expr
                       }
                       if (flag >= 0) {  // valid reference
                           check_array_index($3.type);
+                          attr = lookup_attribute(stack, $1);
+                          $$.reg = gload_attr_addr(attr);
+                          $$.reg = garr_lookup($$.reg, $3.reg);
+                          free_register(rt, $3.reg);
                       }
                       $$.type = INT_T;
                     }
@@ -532,6 +548,7 @@ expr        :    ID ASSIGN expr
                           error(ARRAY_SIZE_NOT_INT, $4.type);
                       }
                       $$.type = INT_ARR_T;
+                      $$.reg = gdecl_arr($4.reg);
                     }
             |    ISVOID_T expr
                     {/* Returns bool and can take any expr.
@@ -696,6 +713,7 @@ actual_list :    actual_list ',' expr
                       $$.type = $1.type + 1;
                       $$.val = $1.val + 4;
                       gpush_arg($3.reg, $$.val);
+                      free_register(rt, $3.reg);
                     }
             |    expr
                     {/* Method call argument list. */
@@ -703,6 +721,7 @@ actual_list :    actual_list ',' expr
                       // this is the leftmost argument
                       $$.val = 0;
                       gpush_arg($1.reg, $$.val);
+                      free_register(rt, $1.reg);
                     }
             ;
 
@@ -1172,7 +1191,7 @@ error(int errtoken, ...)
 }
 
 char *
-lookup_attr_addr(Symbol *attr)
+gload_attr_addr(Symbol *attr)
 {
     assert(attr != NULL);
     char *reg = get_register(rt);

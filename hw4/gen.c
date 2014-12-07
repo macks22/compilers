@@ -525,3 +525,43 @@ void * glabel(char *label)
 {
     printf("%s:\n", label);
 }
+
+/**
+ * Malloc space for an array of the appropriate size.
+ * `as_name` should be the variable label or memory location to store
+ * the base pointer to the newly allocated chunk in.
+ */
+char * gdecl_arr(char *size_reg)
+{
+    gcaller_save();
+    printf("\timull\t$4,%s\n", size_reg);
+    printf("\tmovl\t%s,(%%esp)\n", size_reg);
+    printf("\tcall\tmalloc\n");
+    gcaller_restore();
+    printf("\tmovl\t%%eax,%s\n", size_reg);
+    return size_reg;
+}
+
+
+/**
+ * Move the value from `val_reg` to the offset indicated by `size_reg`
+ * from the base array pointer in `arr_reg`.
+ */
+void * garr_assign(char *arr_reg, char *size_reg, char *val_reg)
+{
+    printf("\timull\t$4,%s\n", size_reg);  // index * 4 = byte offset
+    printf("\taddl\t%s,%s\n", size_reg, arr_reg);  // add offset to base address
+    printf("\tmovl\t%s,(%s)\n", val_reg, arr_reg); // move value to addr location
+}
+
+/**
+ * Gen code to lookup an array index offset value.
+ * The result is stored in the array register passed in.
+ */
+char * garr_lookup(char *arr_reg, char *size_reg)
+{
+    printf("\timull\t$4,%s\n", size_reg);  // index * 4 = byte offset
+    printf("\taddl\t%s,%s\n", size_reg, arr_reg);  // add offset to base address
+    printf("\tmovl\t(%s),%s\n", arr_reg, arr_reg);
+    return arr_reg;
+}

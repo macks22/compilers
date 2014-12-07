@@ -213,3 +213,23 @@ void * gjump(char *label, char *jump_op);
  * Generate the given label at the current position.
  */
 void * glabel(char *label);
+
+/**
+ * Malloc space for an array of the appropriate size.
+ * `as_name` should be the variable label or memory location to store
+ * the base pointer to the newly allocated chunk in.
+ * The size should be calculated before this call and placed in a register.
+ */
+char * gdecl_arr(char *size_reg);
+
+/**
+ * Move the value from `val_reg` to the offset indicated by `size_reg`
+ * from the base array pointer in `arr_reg`.
+ */
+void * garr_assign(char *arr_reg, char *size_reg, char *val_reg);
+
+/**
+ * Gen code to lookup an array index offset value.
+ * The result is stored in the array register passed in.
+ */
+char * garr_lookup(char *arr_reg, char *size_reg);
